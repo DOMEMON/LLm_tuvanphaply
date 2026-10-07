@@ -1,4 +1,4 @@
-# LLM tư vấn hành chính công và hệ thống hỏi đáp tái sử dụng
+<img width="903" height="874" alt="image" src="https://github.com/user-attachments/assets/ac396551-8769-448d-8def-7219d58750c7" /># LLM tư vấn hành chính công và hệ thống hỏi đáp tái sử dụng
 
 Repository bàn giao source code để đọc, đánh giá kiến trúc, chạy kiểm thử và triển khai trên máy riêng. Gồm **G8 — LLM tư vấn hành chính công** và **G8.5 — hệ thống LLM reusable với dataset thay thế được**. Mỗi hệ thống có backend, frontend, migration database, lockfile và Docker riêng; không cần snapshot/image lịch sử của tác giả.
 
@@ -102,10 +102,10 @@ Trong mỗi thư mục, copy `.env.example` sang `.env`, thay password riêng đ
 docker compose up -d --build --wait
 ```
 
-| Hệ thống | Frontend review | Backend local |
+| Hệ thống | Frontend review | Note |
 | --- | --- | --- |
-| G8 | http://localhost:13008 | http://localhost:18008 |
-| G8.5 | http://localhost:13085 | http://localhost:18085 |
+| G8 | [http://localhost:13008](https://g8-hanh-chinh.tail108af4.ts.net/) | hệ thống trả lời theo dataset hành chính công do phường Tăng Nhơn Phú HCM cấp |
+| G8.5 | [http://localhost:13085](https://g85-nau-an.tail108af4.ts.net/) | hệ thống được reuse bằng một bộ data nấu ăn ReciFineGold để test thử khả năng reuse |
 
 Project/port/volume review tách khỏi deployment tham chiếu. Backend build từ Python + lockfile, không dùng image riêng `g7-...:baseline`. DB mới tự migrate; corpus/package bind read-only, **không import corpus vào bảng chat**. Không dùng `down -v` khi cần giữ history.
 
