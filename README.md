@@ -36,6 +36,11 @@ G8 còn namespace `app/rag/g3`, `g4`, `g5`, `g7` vì đang import các module n�
 
 ## 2. Pipeline hệ thống
 
+![Kiến trúc hệ thống G8.5 — Reusable QA Engine với Flexible Dataset](assets/g85-pipeline.jpg)
+
+<details>
+<summary>Xem sơ đồ luồng chi tiết (Mermaid)</summary>
+
 ```mermaid
 flowchart TD
     U[Người dùng] --> UI[React frontend]
@@ -60,6 +65,8 @@ flowchart TD
     SAVE --> RENDER[Render response từ bằng chứng]
     RENDER --> UI
 ```
+
+</details>
 
 Sơ đồ mô tả hướng kiến trúc reusable QA, không coi tất cả capability đều bật ở mọi dataset. G8 chủ yếu dùng direct cho các trường hành chính đã cấu trúc; document package của G8.5 đi nhánh search. Direct chỉ dùng khi package hỗ trợ.
 
