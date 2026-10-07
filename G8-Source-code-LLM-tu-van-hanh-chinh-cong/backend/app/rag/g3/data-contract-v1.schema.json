@@ -1,0 +1,532 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://internal.example.invalid/schemas/g3-data-v1.schema.json",
+  "title": "G3 private administrative procedure data contract",
+  "oneOf": [
+    { "$ref": "#/$defs/source_manifest" },
+    { "$ref": "#/$defs/procedure_record" },
+    { "$ref": "#/$defs/procedure_fragment" },
+    { "$ref": "#/$defs/conflict_record" },
+    { "$ref": "#/$defs/gold_question" }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nonblank": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "nullable_nonblank": {
+      "oneOf": [
+        { "$ref": "#/$defs/nonblank" },
+        { "type": "null" }
+      ]
+    },
+    "schema_version": {
+      "const": "g3-data-v1"
+    },
+    "dataset_version": {
+      "$ref": "#/$defs/id"
+    },
+    "data_classification": {
+      "const": "D2_COMPANY_REAL"
+    },
+    "review_status": {
+      "enum": [
+        "PENDING_REVIEW",
+        "QUARANTINED",
+        "APPROVED_FOR_DEMO",
+        "APPROVED_FOR_PRODUCTION"
+      ]
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reviewer_role", "reviewed_at", "note"],
+      "properties": {
+        "status": { "$ref": "#/$defs/review_status" },
+        "reviewer_role": { "$ref": "#/$defs/nullable_nonblank" },
+        "reviewed_at": {
+          "oneOf": [
+            { "type": "string", "format": "date-time" },
+            { "type": "null" }
+          ]
+        },
+        "note": { "$ref": "#/$defs/nullable_nonblank" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": ["APPROVED_FOR_DEMO", "APPROVED_FOR_PRODUCTION"]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reviewer_role": { "$ref": "#/$defs/nonblank" },
+              "reviewed_at": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      ]
+    },
+    "jurisdiction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["country_code", "province", "district", "ward"],
+      "properties": {
+        "country_code": { "const": "VN" },
+        "province": { "$ref": "#/$defs/nullable_nonblank" },
+        "district": { "$ref": "#/$defs/nullable_nonblank" },
+        "ward": { "$ref": "#/$defs/nullable_nonblank" }
+      }
+    },
+    "raw_locator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workbook_sha256", "sheet", "row_numbers"],
+      "properties": {
+        "workbook_sha256": { "$ref": "#/$defs/sha256" },
+        "sheet": { "$ref": "#/$defs/nonblank" },
+        "row_numbers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "integer", "minimum": 2 }
+        }
+      }
+    },
+    "source_manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_type",
+        "schema_version",
+        "dataset_version",
+        "source_id",
+        "data_classification",
+        "source_type",
+        "title",
+        "source_uri",
+        "public_url",
+        "issuing_authority",
+        "jurisdiction",
+        "procedure_code",
+        "collected_at",
+        "last_verified_at",
+        "effective_from",
+        "effective_to",
+        "validity_status",
+        "content_sha256",
+        "raw_locator",
+        "parser_version",
+        "review"
+      ],
+      "properties": {
+        "record_type": { "const": "SOURCE_MANIFEST" },
+        "schema_version": { "$ref": "#/$defs/schema_version" },
+        "dataset_version": { "$ref": "#/$defs/dataset_version" },
+        "source_id": { "$ref": "#/$defs/id" },
+        "data_classification": { "$ref": "#/$defs/data_classification" },
+        "source_type": {
+          "enum": ["COMPANY_INTERNAL_WORKBOOK", "COMPANY_APPROVED_INTERNAL", "OFFICIAL_PUBLIC"]
+        },
+        "title": { "$ref": "#/$defs/nonblank" },
+        "source_uri": { "$ref": "#/$defs/nonblank" },
+        "public_url": {
+          "oneOf": [
+            { "type": "string", "format": "uri", "pattern": "^https://" },
+            { "type": "null" }
+          ]
+        },
+        "issuing_authority": { "$ref": "#/$defs/nullable_nonblank" },
+        "jurisdiction": { "$ref": "#/$defs/jurisdiction" },
+        "procedure_code": { "$ref": "#/$defs/nullable_nonblank" },
+        "collected_at": {
+          "oneOf": [
+            { "type": "string", "format": "date-time" },
+            { "type": "null" }
+          ]
+        },
+        "last_verified_at": {
+          "oneOf": [
+            { "type": "string", "format": "date-time" },
+            { "type": "null" }
+          ]
+        },
+        "effective_from": {
+          "oneOf": [
+            { "type": "string", "format": "date" },
+            { "type": "null" }
+          ]
+        },
+        "effective_to": {
+          "oneOf": [
+            { "type": "string", "format": "date" },
+            { "type": "null" }
+          ]
+        },
+        "validity_status": { "enum": ["CURRENT", "EXPIRED", "FUTURE", "UNKNOWN"] },
+        "content_sha256": { "$ref": "#/$defs/sha256" },
+        "raw_locator": { "$ref": "#/$defs/raw_locator" },
+        "parser_version": { "$ref": "#/$defs/id" },
+        "review": { "$ref": "#/$defs/review" }
+      }
+    },
+    "fee_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_text", "amount_vnd", "condition"],
+      "properties": {
+        "raw_text": { "$ref": "#/$defs/nonblank" },
+        "amount_vnd": {
+          "oneOf": [
+            { "type": "integer", "minimum": 0 },
+            { "type": "null" }
+          ]
+        },
+        "condition": { "$ref": "#/$defs/nullable_nonblank" }
+      }
+    },
+    "processing_time_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_text", "min_business_days", "max_business_days", "condition"],
+      "properties": {
+        "raw_text": { "$ref": "#/$defs/nonblank" },
+        "min_business_days": {
+          "oneOf": [
+            { "type": "number", "minimum": 0 },
+            { "type": "null" }
+          ]
+        },
+        "max_business_days": {
+          "oneOf": [
+            { "type": "number", "minimum": 0 },
+            { "type": "null" }
+          ]
+        },
+        "condition": { "$ref": "#/$defs/nullable_nonblank" }
+      }
+    },
+    "procedure_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_type",
+        "schema_version",
+        "dataset_version",
+        "procedure_id",
+        "data_classification",
+        "title",
+        "aliases",
+        "category_code",
+        "category_label",
+        "jurisdiction",
+        "applicant_scope",
+        "receiving_authority",
+        "submission_methods",
+        "required_documents",
+        "steps",
+        "fees",
+        "processing_times",
+        "legal_bases",
+        "source_ids",
+        "field_evidence",
+        "missing_fields",
+        "version",
+        "review"
+      ],
+      "properties": {
+        "record_type": { "const": "PROCEDURE_RECORD" },
+        "schema_version": { "$ref": "#/$defs/schema_version" },
+        "dataset_version": { "$ref": "#/$defs/dataset_version" },
+        "procedure_id": { "$ref": "#/$defs/id" },
+        "data_classification": { "$ref": "#/$defs/data_classification" },
+        "title": { "$ref": "#/$defs/nonblank" },
+        "aliases": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/nonblank" }
+        },
+        "category_code": { "$ref": "#/$defs/id" },
+        "category_label": { "$ref": "#/$defs/nonblank" },
+        "jurisdiction": { "$ref": "#/$defs/jurisdiction" },
+        "applicant_scope": { "$ref": "#/$defs/text_array" },
+        "receiving_authority": { "$ref": "#/$defs/text_array" },
+        "submission_methods": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["DIRECT", "ONLINE", "POSTAL", "OTHER"] }
+        },
+        "required_documents": { "$ref": "#/$defs/text_array" },
+        "steps": { "$ref": "#/$defs/text_array" },
+        "fees": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/fee_item" }
+        },
+        "processing_times": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/processing_time_item" }
+        },
+        "legal_bases": { "$ref": "#/$defs/text_array" },
+        "source_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "field_evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "applicant_scope",
+            "receiving_authority",
+            "submission_methods",
+            "required_documents",
+            "steps",
+            "fees",
+            "processing_times",
+            "legal_bases"
+          ],
+          "properties": {
+            "applicant_scope": { "$ref": "#/$defs/id_array" },
+            "receiving_authority": { "$ref": "#/$defs/id_array" },
+            "submission_methods": { "$ref": "#/$defs/id_array" },
+            "required_documents": { "$ref": "#/$defs/id_array" },
+            "steps": { "$ref": "#/$defs/id_array" },
+            "fees": { "$ref": "#/$defs/id_array" },
+            "processing_times": { "$ref": "#/$defs/id_array" },
+            "legal_bases": { "$ref": "#/$defs/id_array" }
+          }
+        },
+        "missing_fields": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "procedure_code",
+              "issuing_authority",
+              "jurisdiction",
+              "applicant_scope",
+              "receiving_authority",
+              "submission_methods",
+              "required_documents",
+              "steps",
+              "fees",
+              "processing_times",
+              "legal_bases",
+              "effective_dates",
+              "public_url"
+            ]
+          }
+        },
+        "version": { "$ref": "#/$defs/id" },
+        "review": { "$ref": "#/$defs/review" }
+      }
+    },
+    "text_array": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/nonblank" }
+    },
+    "id_array": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "source_locator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sheet", "row_number", "column_name", "column_index", "raw_cell_sha256"],
+      "properties": {
+        "sheet": { "$ref": "#/$defs/nonblank" },
+        "row_number": { "type": "integer", "minimum": 2 },
+        "column_name": { "$ref": "#/$defs/nonblank" },
+        "column_index": { "type": "integer", "minimum": 1 },
+        "raw_cell_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "procedure_fragment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_type",
+        "schema_version",
+        "dataset_version",
+        "fragment_id",
+        "procedure_id",
+        "source_id",
+        "data_classification",
+        "section_type",
+        "text",
+        "ordinal",
+        "content_sha256",
+        "source_locator"
+      ],
+      "properties": {
+        "record_type": { "const": "PROCEDURE_FRAGMENT" },
+        "schema_version": { "$ref": "#/$defs/schema_version" },
+        "dataset_version": { "$ref": "#/$defs/dataset_version" },
+        "fragment_id": { "$ref": "#/$defs/id" },
+        "procedure_id": { "$ref": "#/$defs/id" },
+        "source_id": { "$ref": "#/$defs/id" },
+        "data_classification": { "$ref": "#/$defs/data_classification" },
+        "section_type": {
+          "enum": [
+            "OVERVIEW",
+            "APPLICANT_SCOPE",
+            "RECEIVING_AUTHORITY",
+            "SUBMISSION_METHODS",
+            "REQUIRED_DOCUMENTS",
+            "STEPS",
+            "FEES",
+            "PROCESSING_TIME",
+            "LEGAL_BASES",
+            "OTHER"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8000,
+          "pattern": "\\S"
+        },
+        "ordinal": { "type": "integer", "minimum": 0 },
+        "content_sha256": { "$ref": "#/$defs/sha256" },
+        "source_locator": { "$ref": "#/$defs/source_locator" }
+      }
+    },
+    "conflict_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_type",
+        "schema_version",
+        "dataset_version",
+        "conflict_id",
+        "candidate_procedure_id",
+        "source_ids",
+        "row_numbers",
+        "conflict_fields",
+        "status",
+        "resolution",
+        "reviewer_role",
+        "reviewed_at"
+      ],
+      "properties": {
+        "record_type": { "const": "CONFLICT_RECORD" },
+        "schema_version": { "$ref": "#/$defs/schema_version" },
+        "dataset_version": { "$ref": "#/$defs/dataset_version" },
+        "conflict_id": { "$ref": "#/$defs/id" },
+        "candidate_procedure_id": { "$ref": "#/$defs/id" },
+        "source_ids": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "row_numbers": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": { "type": "integer", "minimum": 2 }
+        },
+        "conflict_fields": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "status": { "enum": ["OPEN", "RESOLVED_MERGE", "RESOLVED_VERSION", "RESOLVED_KEEP_SEPARATE"] },
+        "resolution": { "$ref": "#/$defs/nullable_nonblank" },
+        "reviewer_role": { "$ref": "#/$defs/nullable_nonblank" },
+        "reviewed_at": {
+          "oneOf": [
+            { "type": "string", "format": "date-time" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "const": "OPEN" } },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "resolution": { "type": "null" },
+              "reviewer_role": { "type": "null" },
+              "reviewed_at": { "type": "null" }
+            }
+          },
+          "else": {
+            "properties": {
+              "resolution": { "$ref": "#/$defs/nonblank" },
+              "reviewer_role": { "$ref": "#/$defs/nonblank" },
+              "reviewed_at": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      ]
+    },
+    "gold_question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_type",
+        "schema_version",
+        "dataset_version",
+        "question_id",
+        "data_classification",
+        "question",
+        "procedure_id",
+        "facts",
+        "expected_status",
+        "expected_points",
+        "forbidden_points",
+        "gold_source_ids",
+        "gold_fragment_ids",
+        "contains_pii",
+        "split",
+        "author_role",
+        "reviewer_role"
+      ],
+      "properties": {
+        "record_type": { "const": "GOLD_QUESTION" },
+        "schema_version": { "$ref": "#/$defs/schema_version" },
+        "dataset_version": { "$ref": "#/$defs/dataset_version" },
+        "question_id": { "$ref": "#/$defs/id" },
+        "data_classification": { "$ref": "#/$defs/data_classification" },
+        "question": { "$ref": "#/$defs/nonblank" },
+        "procedure_id": {
+          "oneOf": [
+            { "$ref": "#/$defs/id" },
+            { "type": "null" }
+          ]
+        },
+        "facts": { "type": "object" },
+        "expected_status": { "enum": ["ANSWER", "NEED_CLARIFICATION", "INSUFFICIENT_DATA"] },
+        "expected_points": { "$ref": "#/$defs/text_array" },
+        "forbidden_points": { "$ref": "#/$defs/text_array" },
+        "gold_source_ids": { "$ref": "#/$defs/id_array" },
+        "gold_fragment_ids": { "$ref": "#/$defs/id_array" },
+        "contains_pii": { "const": false },
+        "split": { "enum": ["TRAIN", "DEV", "TEST"] },
+        "author_role": { "$ref": "#/$defs/nonblank" },
+        "reviewer_role": { "$ref": "#/$defs/nonblank" }
+      }
+    }
+  }
+}

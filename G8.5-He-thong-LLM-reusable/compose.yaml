@@ -1,0 +1,67 @@
+name: public-g85-review
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: g85_review
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U app -d g85_review']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  backend:
+    build: ./backend
+    environment:
+      DB_HOST: postgres
+      DB_PORT: '5432'
+      DB_NAME: g85_review
+      DB_USER: app
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      WEB_ORIGIN: http://localhost:13085
+      WEB_ORIGINS: http://127.0.0.1:13085
+      SESSION_COOKIE_NAME: g85_review_session
+      SESSION_TTL_SECONDS: '7776000'
+      SESSION_COOKIE_SECURE: 'false'
+      AUTH_DEMO_LOGIN_ENABLED: 'false'
+      CHAT_JOBS_ENABLED: 'true'
+      CHAT_WORKERS: '2'
+      CHAT_JOB_TIMEOUT_SECONDS: '240'
+      G85_PACKAGE_PATH: /run/knowledge-package
+      G85_MODEL_URL: ${MODEL_URL:-http://host.docker.internal:8180/v1}
+      G85_MODEL_NAME: ${MODEL_NAME:-G8-Qwen3-8B-Q4}
+      LANGCHAIN_TRACING_V2: 'false'
+      LANGSMITH_TRACING: 'false'
+    volumes:
+      - type: bind
+        source: ${KNOWLEDGE_PACKAGE_PATH:?Set the reviewed package path in .env}
+        target: /run/knowledge-package
+        read_only: true
+        bind: {create_host_path: false}
+    command: [sh, -c, '.venv/bin/alembic upgrade head && exec .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --no-access-log --log-config logging.json']
+    depends_on:
+      postgres: {condition: service_healthy}
+    extra_hosts: ['host.docker.internal:host-gateway']
+    ports: ['127.0.0.1:18085:8000']
+    healthcheck:
+      test: [CMD, .venv/bin/python, -c, 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:8000/health")']
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 20
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: /api/v1
+        VITE_APP_STAGE: G8.5
+        VITE_VISITOR_MODE: 'true'
+        VITE_REQUIRE_ACCOUNT: 'false'
+    ports: ['127.0.0.1:13085:3000']
+    depends_on:
+      backend: {condition: service_healthy}
+volumes:
+  postgres_data:

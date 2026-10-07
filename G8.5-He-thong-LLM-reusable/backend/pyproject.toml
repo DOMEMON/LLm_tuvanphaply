@@ -1,0 +1,29 @@
+[project]
+name = "g1-core-backend"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "langchain-core==1.6.6",
+  "langgraph==1.2.12",
+  "fastapi>=0.115,<1",
+  "uvicorn>=0.34,<1",
+  "pydantic-settings>=2.8,<3",
+  "sqlalchemy[asyncio]>=2.0,<2.1",
+  "asyncpg>=0.30,<1",
+  "alembic>=1.15,<2",
+  "httpx>=0.28,<0.29",
+  "jsonschema>=4.23,<5",
+  "mcp==2.2.0",
+  "argon2-cffi>=23.1,<26",
+  "websockets>=15,<17",
+]
+[dependency-groups]
+dev = ["pytest>=8,<9", "pytest-asyncio>=0.26,<1", "ruff>=0.11,<1"]
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]
+[tool.ruff]
+line-length = 100
+[tool.ruff.lint]
+select = ["E", "F", "I"]

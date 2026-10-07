@@ -1,0 +1,3 @@
+{"id":"alpha","title":"Thiết bị Alpha — ví dụ giả lập","text":"Thiết bị Alpha hỗ trợ chế độ tự động và thủ công. Chạy kiểm tra trong 12 phút hoặc đến khi đèn báo xanh. Nếu đèn báo đỏ, dừng kiểm tra và liên hệ người phụ trách."}
+{"id":"beta","title":"Thiết bị Beta — ví dụ giả lập","text":"Thiết bị Beta chỉ hỗ trợ chế độ thủ công. Một lượt kiểm tra kéo dài 7 phút. Nguồn không cung cấp mức tiêu thụ điện."}
+{"id":"gamma","title":"Quy trình Gamma — ví dụ giả lập","text":"Đăng ký kiểm tra với người phụ trách. Thời gian chờ phê duyệt không được ghi trong tài liệu. Sau khi được phê duyệt, bước kiểm tra cuối cùng kéo dài 5 phút."}

@@ -1,0 +1,14 @@
+{
+  "groups": [
+    {"aliases": ["hộ tịch", "hộ tục"], "domains": ["civil"]},
+    {"aliases": ["văn hóa xã hội", "văn hóa và xã hội", "xã hội và văn hóa", "xã hội văn hóa"], "domains": ["welfare", "education", "merit"]},
+    {"aliases": ["kinh tế hạ tầng và đô thị", "kinh tế hạ tầng đô thị"], "domains": ["business", "land", "housing", "construction"]}
+  ],
+  "facets": {
+    "submission_methods": {
+      "aliases": {"online": ["online", "trực tuyến", "qua mạng"], "offline": ["trực tiếp"]},
+      "values": {"trực tuyến": ["online"], "online": ["online"], "trực tiếp": ["offline"], "cả hai": ["online", "offline"]},
+      "label": "Hình thức nộp"
+    }
+  }
+}

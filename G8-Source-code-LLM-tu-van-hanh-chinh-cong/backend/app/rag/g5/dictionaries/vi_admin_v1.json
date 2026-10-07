@@ -1,0 +1,303 @@
+{
+  "version": "vi-admin-routing-1.1.4",
+  "schema_version": 1,
+  "corpus_version": "company-tthc-9c38dde8-v1-adjudicated-fees-v2",
+  "corpus_sha256": "a1ffadf8965bc62741a9239e01fc9dbd220589e28ed72311da6581231f44cd04",
+  "provenance": "AI-authored engineering vocabulary; legal facts remain in the approved corpus. Not certified by a human linguist or legal reviewer. Original Tu workbooks preserved.",
+  "source_workbook_sha256": "aefb10c787acc6fe8ea41bc0ce863cb18125c822eb23c7787dc7154fc473e623",
+  "groups": {
+    "business": "hộ kinh doanh|hộ cá thể|hộ buôn bán|hộ gia đình|kinh doanh hộ|tiệm|quán|sạp|cửa hàng|kinh doanh",
+    "temporary": "tạm|tạm thời|một thời gian|vài tháng|ba tháng|hai tháng|mấy tháng|rồi mở lại|sau đó mở lại",
+    "permanent": "hẳn|vĩnh viễn|luôn|không kinh doanh nữa|không buôn bán nữa|giải thể|chấm dứt",
+    "stop_business": "dẹp tiệm|dẹp quán|dẹp sạp|dẹp cửa hàng|đóng cửa|nghỉ bán|nghỉ buôn|ngừng bán|ngưng bán|dừng kinh doanh|ngưng kinh doanh|nghỉ kinh doanh|nghỉ sạp|tạm nghỉ|tạm ngưng|đóng quán|đóng tiệm|đóng vĩnh viễn|đóng hẳn|đóng luôn|dẹp hẳn|tạm dẹp",
+    "marriage": "kết hôn|kết hôn nhân|đăng ký cưới|làm giấy vợ chồng|làm giấy thành vợ thành chồng|làm hôn thú|giấy hôn thú|đăng ký lấy vợ|đăng ký lấy chồng|lấy vợ|lấy chồng",
+    "marriage_colloquial": "cưới vợ|cưới chồng|lấy vợ|lấy chồng",
+    "marriage_request": "thủ tục|đăng ký|đăng kí|hồ sơ|giấy tờ|giấy gì|lệ phí|phí đăng ký|nơi nộp|nộp ở đâu|làm ở đâu|thời gian giải quyết",
+    "foreign": "người nước ngoài|người ngoại quốc|quốc tịch nước ngoài|quốc tịch khác|yếu tố nước ngoài|chồng ngoại quốc|vợ ngoại quốc",
+    "death": "qua đời|từ trần|tạ thế|vừa mất|đã mất|mới mất|mất rồi|mất hôm qua|mất hôm nay|mất sáng nay|không còn sống nữa|chết|mai táng|chôn cất|an táng|lo đám tang",
+    "bereavement": "qua đời|từ trần|tạ thế|vừa mất|đã mất|mới mất|mất rồi|mất hôm qua|mất hôm nay|mất sáng nay|không còn sống nữa|người chết|người đã khuất|người quá cố",
+    "deceased_person": "người nhà|người thân|gia đình|ông|bà|ba|má|bố|mẹ|cha|anh|chị|em|chồng|vợ|con|người chết|người đã khuất|người quá cố",
+    "funeral_help": "hỗ trợ|trợ cấp|xin tiền|xin khoản|chi phí|tiền mai táng|tiền chôn cất",
+    "social_retirement": "hưu trí xã hội|hưu xã hội",
+    "social_assistance": "bảo trợ xã hội|trợ cấp xã hội|trợ cấp bảo trợ|tiền bảo trợ",
+    "meritorious": "người có công|thương binh|bệnh binh",
+    "loan": "vay vốn|vay tiền|vay quỹ|vay từ quỹ|vay ưu đãi|vay",
+    "employment": "việc làm|tạo việc|công ăn việc làm|tuyển thợ|tuyển thêm thợ|tuyển lao động|tuyển thêm lao động",
+    "laborer": "người lao động|cá nhân|tự tạo việc|tự tạo công việc|lao động tự do|tự tạo công ăn việc làm",
+    "employer": "cơ sở sản xuất|cơ sở kinh doanh|doanh nghiệp|hợp tác xã|hộ kinh doanh|chủ xưởng|cơ sở|xưởng|công ty",
+    "birth": "khai sinh|khai sanh|giấy sinh",
+    "school_transfer": "chuyển trường|đổi trường|sang trường khác|chuyển sang trường|chuyển qua trường|rút qua trường khác",
+    "lower_secondary": "THCS|trung học cơ sở|cấp hai|cấp 2|lớp 6|lớp 7|lớp 8|lớp 9|lớp sáu|lớp bảy|lớp tám|lớp chín",
+    "not_lower_secondary": "THPT|trung học phổ thông|cấp ba|cấp 3|lớp 10|lớp 11|lớp 12|tiểu học|mầm non|mẫu giáo|đại học"
+  },
+  "entries": [
+    {
+      "id":"d2_title_011f005278ef","name":"Nội quy lao động",
+      "aliases":["đăng ký nội quy","đăng kí nội quy lao động","đăng ký quy định làm việc","đăng ký quy tắc làm việc","nội qui lao động"],
+      "rules":[["nội quy|nội qui|quy định làm việc|quy tắc làm việc|quy định giờ giấc|kỷ luật công nhân","đăng ký|đăng kí|công nhân|lao động|doanh nghiệp|công ty|xưởng"]],
+      "note":"Không đồng nhất với đăng ký hợp đồng lao động hay nội quy trường học."
+    },
+    {
+      "id":"d2_title_10ed2a9ea4a7","name":"Hỗ trợ chi phí khuyến khích hỏa táng",
+      "aliases":["tiền hỗ trợ hỏa thiêu","hỗ trợ tiền thiêu","hỗ trợ hỏa thiêu","trợ cấp hỏa táng","hỗ trợ tiền hỏa táng"],
+      "rules":[["hỏa táng|hoả táng|hỏa thiêu|hoả thiêu|thiêu người thân","@funeral_help"],["thiêu","người thân|người mất|gia đình","@funeral_help"]],
+      "note":"Hỏa thiêu/hỏa táng là biến thể cách gọi; không biến mọi tiền đám tang thành hỗ trợ hỏa táng."
+    },
+    {
+      "id":"d2_title_1620179477b4","name":"Đăng ký kết hôn có yếu tố nước ngoài",
+      "aliases":["đăng ký kết hôn với người ngoại quốc","giấy kết hôn với người nước ngoài","hôn thú có yếu tố nước ngoài","kết hôn khác quốc tịch"],
+      "rules":[["@marriage","@foreign"],["@marriage_colloquial","@marriage_request","@foreign"]],
+      "context_rules":[["@foreign"]],"context_from":["d2_title_6d6862db57ba","d2_title_1620179477b4"],
+      "note":"Quốc tịch là điều kiện phân biệt; không dùng riêng từ nước ngoài để suy diễn thủ tục."
+    },
+    {"id":"d2_title_1df9a1a807f0","name":"Thủ tục hỗ trợ chi phí khuyến khích hoả táng đối với người dân có hộ khẩu Thành phố Hồ Chí Minh","shadow_of":"d2_title_10ed2a9ea4a7","note":"Giữ dòng nguồn; không tạo ứng viên cạnh tranh với bản canonical."},
+    {
+      "id":"d2_title_1e0d3df69ad5","name":"chứng thực chữ ký - chứng thực Hợp đồng giao dịch/Di chúc",
+      "aliases":["xác thực chữ ký","xác nhận chữ ký","chứng chữ ký","chứng thực di chúc","chứng thực giấy ủy quyền","chứng thực hợp đồng"],
+      "rules":[["chứng thực|xác thực|chứng chữ ký","chữ ký|chữ kí|di chúc|hợp đồng|ủy quyền|uỷ quyền"]],
+      "note":"Không gộp công chứng và chứng thực; sao y bản chính là thủ tục khác."
+    },
+    {
+      "id":"d2_title_2dc6a6a0b92a","name":"Chuyển trường đối với học sinh THCS",
+      "aliases":["chuyển trường cấp hai","chuyển trường cấp 2","đổi trường THCS","chuyển trường trung học cơ sở"],
+      "rules":[["@school_transfer","@lower_secondary"]],
+      "clarification_rules":[["@lower_secondary"]],
+      "note":"Phải biết cấp học, không lấy THCS trả cho THPT/tiểu học."
+    },
+    {
+      "id":"d2_title_30228658fce3","name":"XÁC NHẬN TÌNH TRẠNG NHÀ Ở",
+      "aliases":["xác nhận hiện trạng nhà ở","giấy xác nhận tình trạng nhà","xác nhận thực trạng nhà ở","xin xác nhận nhà ở","hiện trạng nhà"],
+      "rules":[["xác nhận|chứng nhận","tình trạng nhà|hiện trạng nhà|thực trạng nhà|hiện trạng căn nhà|thực trạng căn nhà"],["xác nhận","căn nhà","tình trạng"]],
+      "note":"Chỉ nhận diện yêu cầu, không suy ra quyền sở hữu hay đủ điều kiện nhà ở xã hội."
+    },
+    {
+      "id":"d2_title_34afa9c1ded0","name":"Tạm ngừng kinh doanh/tiếp tục kinh doanh trước thời hạn đã thông báo của hộ kinh doanh",
+      "aliases":["tạm ngưng hộ kinh doanh","tạm nghỉ hộ kinh doanh","hộ kinh doanh hoạt động lại trước hạn","hộ kinh doanh mở lại trước hạn"],
+      "rules":[["@business","@stop_business","@temporary"],["@business","mở lại|bán lại|hoạt động lại|kinh doanh lại|tiếp tục kinh doanh","trước hạn|trước thời hạn|sớm hơn thời hạn"]],
+      "clarification_rules":[["nghỉ|ngừng|ngưng","rồi mở lại|sau đó mở lại|tạm thời|vài tháng|ba tháng|90 ngày"]],
+      "note":"Dẹp tiệm đơn độc phải hỏi tạm nghỉ hay đóng hẳn; mở lại cần làm rõ trước hạn hay đăng ký mới."
+    },
+    {
+      "id":"d2_title_3cc26cfe53d5","name":"Xác định, xác định lại mức độ khuyết tật và cấp Giấy xác nhận khuyết tật",
+      "aliases":["giấy xác nhận tàn tật","giấy chứng nhận khuyết tật","đánh giá mức độ khuyết tật","đánh giá lại khuyết tật","xác định mức độ tàn tật"],
+      "rules":[["khuyết tật|tàn tật","xác định|đánh giá|xác nhận|chứng nhận|nặng thêm"]],
+      "note":"Không đồng nhất với giám định tỷ lệ thương tật hay hưởng trợ cấp khuyết tật."
+    },
+    {
+      "id":"d2_title_54af5c03413a","name":"Cấp đổi Bằng “Tổ quốc ghi công”",
+      "aliases":["đổi bằng ghi công","đổi bằng Tổ quốc ghi công","cấp đổi bằng liệt sĩ","đổi lại bằng ghi công liệt sĩ"],
+      "rules":[["bằng tổ quốc ghi công|bằng ghi công liệt sĩ","đổi|hư|hỏng|rách|cũ"]],
+      "note":"Không suy diễn cấp lần đầu hay công nhận liệt sĩ."
+    },
+    {
+      "id":"d2_title_55245834a3c0","name":"HỒ SƠ CẤP SỐ NHÀ",
+      "aliases":["xin đánh số nhà","đăng ký số nhà","xin cấp địa chỉ số nhà","xin số cho nhà mới","giấy chứng nhận số nhà"],
+      "rules":[["số nhà|địa chỉ nhà","xin cấp|xin đánh|chưa có|đăng ký"],["nhà","chưa được cấp số","thủ tục|xin cấp"]],
+      "note":"Số nhà khác sổ nhà; mua biển số trang trí không phải xin cấp số."
+    },
+    {
+      "id":"d2_title_56784de1011e","name":"Giải quyết chế độ hỗ trợ để theo học đến trình độ đại học tại các cơ sở giáo dục thuộc hệ thống giáo dục quốc dân",
+      "aliases":["hỗ trợ học tập đến đại học","hỗ trợ theo học đại học","chế độ hỗ trợ học đến đại học","hỗ trợ học đến trình độ đại học"],
+      "rules":[["hỗ trợ|chế độ hỗ trợ","theo học|học tập|học đến","đại học"]],
+      "note":"Không biến mọi học phí/học bổng thành chế độ này; điều kiện hưởng vẫn lấy từ evidence."
+    },
+    {
+      "id":"d2_title_58aa31837615","name":"Thủ tục đăng ký khai sinh",
+      "aliases":["khai sanh","đăng kí khai sinh","làm giấy khai sanh","đăng ký chào đời","làm giấy sinh cho bé"],
+      "rules":[["em bé|trẻ|con|bé","mới sinh|mới sanh|vừa sinh|vừa sanh","làm giấy|đăng ký|đăng kí"]],
+      "note":"Khai sanh là biến thể cách nói; giấy chứng sinh, trích lục, đăng ký lại là khái niệm khác."
+    },
+    {
+      "id":"d2_title_61e34e3360a8","name":"Vay vốn hỗ trợ tạo việc làm, duy trì và mở rộng việc làm từ Quỹ quốc gia về việc làm đối với cơ sở sản xuất, kinh doanh.",
+      "aliases":["vay quỹ việc làm cho doanh nghiệp","vay vốn tạo việc làm cho cơ sở kinh doanh","vay vốn việc làm cho cơ sở sản xuất","vay quỹ việc làm cho hợp tác xã"],
+      "rules":[["@loan","@employment","@employer"]],
+      "clarification_rules":[["@employer","đứng tên|bên vay"]],
+      "note":"Bên vay là cơ sở, không mặc định cá nhân; câu chỉ nêu quỹ việc làm cần hỏi đối tượng."
+    },
+    {
+      "id":"d2_title_654f41c7e224","name":"Hỗ trợ chi phí mai táng đối với đối tượng hưởng trợ cấp hưu trí xã hội",
+      "aliases":["mai táng người hưởng hưu trí xã hội","tiền chôn cất người hưởng hưu xã hội","trợ cấp đám tang hưu trí xã hội","hỗ trợ an táng hưu trí xã hội"],
+      "rules":[["@social_retirement","@death","@funeral_help"]],
+      "note":"Hưu trí xã hội không phải lương hưu BHXH và không phải mọi đối tượng bảo trợ xã hội."
+    },
+    {
+      "id":"d2_title_6696b9fb226a","name":"Thủ tục đăng ký khai tử",
+      "aliases":["làm giấy chứng tử","giấy chứng tử","đăng kí khai tử","đi khai tử","đăng ký người chết","đăng ký tử"],
+      "rules":[["người thân|ông|bà|ba|má|bố|mẹ","qua đời|vừa mất|đã mất","đăng ký khai tử|làm giấy chứng tử"],["khai tử","đăng ký|cần|thủ tục"]],
+      "note":"Giấy báo tử là thành phần đầu vào, không phải alias tự động của đăng ký khai tử."
+    },
+    {
+      "id":"d2_title_69915286e651","name":"XÁC NHẬN VỊ TRÍ NHÀ - ĐẤT",
+      "aliases":["xác nhận vị trí thửa đất","xác nhận vị trí căn nhà","giấy xác nhận vị trí nhà đất","xác nhận địa điểm nhà đất"],
+      "rules":[["xác nhận|chứng nhận","vị trí|địa điểm","nhà|đất|thửa đất"]],
+      "note":"Không phải cấp sổ đỏ, cấp số nhà, chứng nhận quyền sở hữu."
+    },
+    {
+      "id":"d2_title_6b05578da38d","name":"Giải quyết chế độ người hoạt động kháng chiến giải phóng dân tộc, bảo vệ tổ quốc và làm nghĩa vụ quốc tế",
+      "aliases":["chế độ người tham gia kháng chiến","trợ cấp người hoạt động kháng chiến","chế độ người làm nghĩa vụ quốc tế","chế độ kháng chiến bảo vệ tổ quốc"],
+      "rules":[["chế độ|trợ cấp|chính sách","tham gia kháng chiến|hoạt động kháng chiến|làm nghĩa vụ quốc tế|kháng chiến giải phóng"]],
+      "note":"Người có công là nhóm lớn hơn, không dùng riêng cụm đó làm alias."
+    },
+    {
+      "id":"d2_title_6d6862db57ba","name":"Thủ tục đăng ký kết hôn",
+      "aliases":["làm giấy vợ chồng","làm giấy thành vợ thành chồng","đăng ký cưới","làm hôn thú","giấy hôn thú","đăng ký lấy vợ","đăng ký lấy chồng"],
+      "rules":[["@marriage_colloquial","@marriage_request"]],"exclude_groups":["@foreign"],
+      "note":"Yếu tố nước ngoài chuyển đúng biến thể; đám cưới/lễ cưới đơn độc chưa là yêu cầu đăng ký."
+    },
+    {"id":"d2_title_70d8a7c53c19","name":"HỒ SƠ CẤP GIẤY PHÉP XÂY DỰNG","shadow_of":"d2_title_c98b4aa39036","note":"Dòng tiêu đề thiếu nội dung, ánh xạ tới thủ tục canonical đầy đủ."},
+    {
+      "id":"d2_title_72687979d6ad","name":"THÔNG TIN QUY HOẠCH",
+      "aliases":["tra cứu quy hoạch","đất dính quy hoạch","đất có dính quy hoạch","xin thông tin quy hoạch đất","kiểm tra quy hoạch","đất có bị quy hoạch"],
+      "rules":[["quy hoạch","tra cứu|kiểm tra|xin thông tin|cung cấp thông tin|dính|bị"]],
+      "note":"Lộ giới/giải tỏa chỉ là gợi ý cần làm rõ; không suy đoán tình trạng một thửa đất."
+    },
+    {
+      "id":"d2_title_7677bda9d6bd","name":"Giải quyết chế độ trợ cấp thờ cúng liệt sĩ.",
+      "aliases":["tiền thờ cúng liệt sĩ","trợ cấp hương khói liệt sĩ","hỗ trợ thờ phụng liệt sĩ","chế độ người thờ cúng liệt sĩ"],
+      "rules":[["liệt sĩ|liệt sỹ","thờ cúng|hương khói|thờ phụng","trợ cấp|xin tiền|chế độ|hỗ trợ"]],
+      "note":"Không đồng nhất với cấp đổi bằng ghi công hay xác nhận thân nhân."
+    },
+    {
+      "id":"d2_title_829daa0c9629","name":"Chấm dứt hoạt động hộ kinh doanh",
+      "aliases":["giải thể hộ kinh doanh","đóng mã hộ kinh doanh","xóa đăng ký hộ kinh doanh","ngừng hẳn hộ kinh doanh","chấm dứt kinh doanh hộ cá thể"],
+      "rules":[["@business","@stop_business","@permanent"]],
+      "clarification_rules":[["đóng|ngừng|ngưng|chấm dứt","hẳn|vĩnh viễn|không hoạt động lại"]],
+      "note":"Từ dẹp tiệm đơn độc không đủ phân biệt tạm ngừng với chấm dứt."
+    },
+    {
+      "id":"d2_title_85fb93f4cc41","name":"Thực hiện, điều chỉnh, thôi hưởng trợ cấp hưu trí xã hội",
+      "aliases":["xin hưởng hưu xã hội","điều chỉnh hưu xã hội","ngừng hưởng hưu trí xã hội","xin trợ cấp hưu trí xã hội","chế độ hưu xã hội"],
+      "rules":[["@social_retirement","xin hưởng|xin trợ cấp|đăng ký|điều chỉnh|thôi hưởng|khoản|chế độ|trợ cấp"]],
+      "exclude_groups":["@death"],
+      "note":"Hỏi người già chung chung phải làm rõ loại trợ cấp; không suy diễn điều kiện tuổi."
+    },
+    {
+      "id":"d2_title_86cb084c633d","name":"Cấp lại Giấy chứng nhận đăng ký hộ kinh doanh",
+      "aliases":["làm lại giấy hộ kinh doanh","cấp lại đăng ký hộ cá thể","xin lại giấy kinh doanh hộ gia đình","cấp lại giấy phép hộ kinh doanh"],
+      "rules":[["@business","giấy|tờ|đăng ký","mất|thất lạc|rách|hỏng|cấp lại|xin lại|làm lại"]],
+      "clarification_rules":[["cấp lại|xin lại","trước|giữ nguyên"]],
+      "note":"Cấp lại giấy khác thay đổi thông tin, thành lập lại hay hoạt động trở lại."
+    },
+    {
+      "id":"d2_title_aa19a2014e41","name":"Cấp giấy xác nhận thân nhân của người có công",
+      "aliases":["xác nhận thân nhân người có công","chứng nhận thân nhân người có công","giấy xác nhận con người có công","xác nhận người nhà người có công"],
+      "rules":[["thân nhân|người nhà|con","@meritorious","xác nhận|chứng nhận"]],
+      "note":"Xác nhận quan hệ không đồng nghĩa xin trợ cấp, học phí hay mai táng."
+    },
+    {
+      "id":"d2_title_b1224d6b5835","name":"Thực hiện, điều chỉnh, thôi hưởng trợ cấp xã hội hàng tháng, hỗ trợ kinh phí chăm sóc, nuôi dưỡng hàng tháng",
+      "aliases":["tiền bảo trợ xã hội hằng tháng","trợ cấp xã hội hằng tháng","trợ cấp nuôi dưỡng hàng tháng","hỗ trợ chăm sóc hàng tháng","ngừng hưởng trợ cấp bảo trợ"],
+      "rules":[["@social_assistance","hàng tháng|hằng tháng|mỗi tháng|hàng tháng","xin|hưởng|điều chỉnh|thôi|ngừng|đăng ký"]],
+      "exclude_groups":["@death","@social_retirement"],
+      "note":"Tách loại trợ cấp định kỳ với hỗ trợ mai táng; không dùng cụm trợ cấp đơn độc."
+    },
+    {
+      "id":"d2_title_ba78b5d39212","name":"Thủ tục xác nhận tình trạng hôn nhân",
+      "aliases":["giấy độc thân","giấy xác nhận độc thân","giấy chứng nhận độc thân","giấy tình trạng hôn nhân","xác nhận chưa kết hôn","chứng nhận chưa có vợ","chứng nhận chưa có chồng"],
+      "rules":[["giấy|xác nhận|chứng minh","có vợ chồng hay chưa|đã kết hôn hay chưa|đang có vợ hay chưa|đang có chồng hay chưa"],["độc thân|chưa có vợ|chưa có chồng","xác nhận|cấp giấy|xin giấy"]],
+      "note":"Tình trạng hôn nhân không phải chỉ độc thân; alias nhận diện tên giấy, không xác nhận tình trạng thực tế của người dùng."
+    },
+    {
+      "id":"d2_title_c343c85df1af","name":"ĐĂNG KÝ ĐẤT ĐAI, TÀI SẢN GẮN LIỀN VỚI ĐẤT LẦN ĐẦU",
+      "aliases":["đăng ký đất lần đầu","đăng ký nhà đất lần đầu","kê khai đất lần đầu","đăng ký tài sản trên đất lần đầu"],
+      "rules":[["đất|nhà đất|tài sản trên đất","đăng ký|kê khai","lần đầu|chưa đăng ký bao giờ|chưa từng đăng ký"]],
+      "note":"Không coi làm sổ đỏ/sổ hồng chung chung là đăng ký lần đầu hay tự hứa cấp giấy."
+    },
+    {
+      "id":"d2_title_c98b4aa39036","name":"CẤP GIẤY PHÉP XÂY DỰNG",
+      "aliases":["xin phép xây nhà","xin phép cất nhà","giấy phép cất nhà","xin giấy phép xây nhà","xin giấy phép xây cất","xin phép xây cất"],
+      "rules":[["xây nhà|cất nhà|xây cất|xây dựng","xin phép|xin giấy phép|cấp phép"]],
+      "note":"Cất nhà là cách nói phổ thông miền Nam; cấp phép khác thông báo khởi công."
+    },
+    {
+      "id":"d2_title_e5945d1751b7","name":"Thủ tục Đăng ký thành lập hộ kinh doanh",
+      "aliases":["đăng ký kinh doanh hộ cá thể","đăng ký hộ cá thể","mở hộ kinh doanh mới","mở hộ kinh doanh","mở hộ cá thể","đăng ký kinh doanh hộ gia đình","thành lập hộ cá thể"],
+      "rules":[["@business","đăng ký mới|thành lập|mở mới|mới mở|bắt đầu kinh doanh"]],
+      "clarification_rules":[["chọn|làm|đăng ký","hộ kinh doanh|hộ cá thể"]],
+      "exclude_groups":["cấp lại|xin lại|làm lại|mất giấy|rách giấy|giấy bị rách|thất lạc giấy"],
+      "note":"Mở quán đơn độc chưa xác định hộ hay doanh nghiệp; không coi thành lập công ty là hộ kinh doanh."
+    },
+    {
+      "id":"d2_title_eb5f9df122cd","name":"THÔNG BÁO KHỞI CÔNG",
+      "aliases":["báo ngày khởi công","báo ngày bắt đầu xây nhà","thông báo bắt đầu xây dựng","báo khởi công xây nhà","thông báo ngày xây cất"],
+      "rules":[["thông báo|báo ngày|báo khởi công|báo","khởi công|bắt đầu xây|bắt đầu cất nhà|bắt đầu thi công"]],
+      "note":"Không biến có giấy phép thành suy đoán được phép khởi công ngay."
+    },
+    {
+      "id":"d2_title_f29de859e25e","name":"Hưởng trợ cấp khi người có công đang hưởng trợ cấp ưu đãi từ trần",
+      "aliases":["trợ cấp từ trần người có công","trợ cấp người có công qua đời","chế độ người có công từ trần","trợ cấp khi thương binh đang hưởng ưu đãi mất"],
+      "rules":[["@meritorious","@death","trợ cấp ưu đãi|đang hưởng ưu đãi|đang nhận ưu đãi"]],
+      "note":"Đối tượng và chế độ đang hưởng cần phân biệt với bảo trợ xã hội, BHXH."
+    },
+    {
+      "id":"d2_title_f85a8600ee33","name":"Đăng ký thay đổi nội dung đăng ký hộ kinh doanh",
+      "aliases":["đổi tên hộ kinh doanh","đổi địa chỉ hộ kinh doanh","thay đổi ngành nghề hộ kinh doanh","đổi chủ hộ kinh doanh","đổi địa điểm kinh doanh hộ cá thể","đăng ký thay đổi nội dung hộ kinh doanh","thay đổi thông tin đăng ký hộ kinh doanh"],
+      "rules":[["@business","đổi địa điểm|đổi chỗ buôn bán|đổi chỗ hoạt động|đổi địa chỉ|địa chỉ cũng đổi|sửa địa chỉ|đổi tên|đổi ngành nghề|thêm ngành nghề|đổi chủ|thay đổi thông tin|sửa giấy đăng ký"]],
+      "clarification_rules":[["thay đổi địa chỉ|đổi địa chỉ|thay đổi thông tin"]],
+      "note":"Giấy mất/hư chỉ cấp lại; thay đổi nội dung không phải đóng hẳn rồi mở mới."
+    },
+    {
+      "id":"d2_title_f8c56de9462a","name":"Vay vốn hỗ trợ tạo việc làm, duy trì và mở rộng việc làm từ Quỹ quốc gia về việc làm đối với người lao động",
+      "aliases":["vay quỹ việc làm cho cá nhân","vay vốn tự tạo việc làm","người lao động vay quỹ việc làm","vay tạo việc làm cá nhân"],
+      "rules":[["@loan","@employment","@laborer"]],
+      "clarification_rules":[["@laborer","đứng tên|bên vay"]],
+      "note":"Người lao động khác cơ sở sử dụng lao động; thiếu đối tượng thì hỏi lại."
+    },
+    {
+      "id":"d2_title_fa144e522190","name":"Hỗ trợ chi phí mai táng cho đối tượng bảo trợ xã hội",
+      "aliases":["mai táng người hưởng bảo trợ xã hội","tiền chôn cất đối tượng bảo trợ","hỗ trợ an táng bảo trợ xã hội","mai táng đối tượng trợ cấp xã hội"],
+      "rules":[["@social_assistance","@death","@funeral_help"]],
+      "exclude_groups":["@social_retirement"],
+      "note":"Sửa nhầm qualifier ở workbook cũ: bảo trợ xã hội, không gán hưu trí xã hội cho dòng này."
+    },
+    {
+      "id":"d2_title_ff5c71001a91","name":"Thủ tục xét, cấp học bổng chính sách",
+      "aliases":["học bổng diện chính sách","học bổng theo chính sách","xin học bổng chính sách","xét học bổng chính sách"],
+      "rules":[["học bổng","chính sách"]],
+      "note":"Không đồng nhất học bổng trường/doanh nghiệp/du học với học bổng chính sách."
+    },
+    {
+      "id":"d2_title_ffba4ebaacd0","name":"Thủ tục nhận cha mẹ con",
+      "aliases":["làm giấy nhận con","đăng ký nhận con ruột","xác nhận cha con","xác nhận mẹ con","làm thủ tục nhận cha","làm thủ tục nhận mẹ","đăng ký nhận bố"],
+      "rules":[["nhận con ruột|nhận cha ruột|nhận mẹ ruột|nhận bố ruột","đăng ký|làm giấy|thủ tục"]],
+      "note":"Nhận cha mẹ con khác nhận con nuôi; ADN là chứng cứ, không tự suy đoán bắt buộc."
+    }
+  ],
+  "ambiguities": [
+    {"key":"bereavement_procedure","all":["@deceased_person","@bereavement","thủ tục|giấy tờ|làm gì|làm sao|cần làm|phải làm|đăng ký"],"fallback_only":true,"ids":["d2_title_6696b9fb226a"],"note":"Bạn muốn hỏi thủ tục đăng ký khai tử cho người đã mất, đúng không? Nếu bạn cần hỗ trợ mai táng hoặc hỏa táng, hãy nói rõ nhu cầu đó để mình tìm đúng thủ tục."},
+    {"key":"martyr_benefit_kind","all":["liệt sĩ|liệt sỹ","trợ cấp|hỗ trợ|chế độ"],"ids":["d2_title_7677bda9d6bd"],"note":"Bạn hỏi trợ cấp thờ cúng liệt sĩ hay chế độ khác dành cho thân nhân? Nguồn hiện có hướng dẫn trợ cấp thờ cúng; chưa đủ thông tin để mặc định bạn hỏi chế độ này."},
+    {"key":"benefit_choice_unresolved","all":["chưa nói|chưa rõ|chưa biết","hưu trí xã hội","bảo trợ xã hội|BHXH"],"always":true,"ids":["d2_title_85fb93f4cc41","d2_title_b1224d6b5835"],"note":"Bạn đang hỏi hưu trí xã hội, bảo trợ xã hội hay lương hưu BHXH? Chưa đủ thông tin để chọn loại chế độ."},
+    {"key":"construction_two_requests","all":["giấy phép","thông báo khởi công","cùng lúc|cả hai|hai việc|hai thủ tục"],"always":true,"ids":["d2_title_c98b4aa39036","d2_title_eb5f9df122cd"],"note":"Cấp phép xây dựng và thông báo khởi công là hai thủ tục. Bạn muốn xem việc nào trước?"},
+    {"key":"social_stop_and_funeral","all":["@social_assistance","thôi hưởng|ngừng hưởng","mai táng","đồng thời|cùng lúc|cả hai"],"always":true,"ids":["d2_title_b1224d6b5835","d2_title_fa144e522190"],"note":"Thôi hưởng trợ cấp định kỳ và hỗ trợ mai táng là hai nhu cầu. Bạn muốn xem việc nào trước?"},
+    {"key":"meritorious_unknown_benefit","all":["@meritorious","người mất|vừa mất|qua đời|từ trần","chưa biết|chưa rõ","ưu đãi"],"always":true,"ids":["d2_title_f29de859e25e"],"note":"Cần xác nhận người mất có đang hưởng trợ cấp ưu đãi hay không; không tự kết luận điều kiện hưởng."},
+    {"key":"newborn_purpose","all":["con|bé|trẻ","mới sinh|mới sanh|vừa sinh|vừa sanh","thủ tục|làm gì"],"ids":["d2_title_58aa31837615"],"note":"Bạn muốn hỏi thủ tục đăng ký khai sinh cho bé đúng không?"},
+    {"key":"cremation_purpose","all":["hỏa táng|hoả táng|hỏa thiêu|hoả thiêu|thiêu người thân"],"ids":["d2_title_10ed2a9ea4a7"],"note":"Bạn đang muốn hỏi thủ tục hỗ trợ chi phí khuyến khích hỏa táng đúng không?"},
+    {"key":"business_stop","all":["@business","@stop_business"],"ids":["d2_title_34afa9c1ded0","d2_title_829daa0c9629"],"note":"Tạm nghỉ hay chấm dứt hẳn?"},
+    {"key":"business_reopen","all":["@business","mở lại|bán lại|hoạt động lại"],"ids":["d2_title_34afa9c1ded0","d2_title_e5945d1751b7"],"note":"Hoạt động lại trước hạn tạm ngừng hay đăng ký mới?"},
+    {"key":"business_open","all":["mở quán|mở tiệm|mở sạp"],"ids":["d2_title_e5945d1751b7"],"note":"Đăng ký hộ kinh doanh hay doanh nghiệp?"},
+    {"key":"funeral_population","all":["mai táng|chôn cất|an táng|đám tang","@funeral_help"],"ids":["d2_title_654f41c7e224","d2_title_fa144e522190","d2_title_f29de859e25e"],"note":"Người mất đang hưởng chế độ nào?"},
+    {"key":"employment_borrower","all":["@loan","@employment"],"ids":["d2_title_61e34e3360a8","d2_title_f8c56de9462a"],"note":"Cá nhân hay cơ sở sản xuất, kinh doanh đứng tên vay?"},
+    {"key":"elderly_benefit","all":["người già|người cao tuổi","trợ cấp|trợ giúp|tiền hỗ trợ"],"ids":["d2_title_85fb93f4cc41","d2_title_b1224d6b5835"],"note":"Hưu trí xã hội, bảo trợ hay lương hưu BHXH?"},
+    {"key":"school_level","all":["@school_transfer"],"ids":["d2_title_2dc6a6a0b92a"],"note":"Học cấp nào? Chỉ có nguồn THCS."},
+    {"key":"scholarship_kind","all":["học bổng"],"ids":["d2_title_ff5c71001a91","d2_title_56784de1011e"],"note":"Học bổng chính sách hay chế độ hỗ trợ học tập khác?"},
+    {"key":"land_papers","all":["sổ đỏ|sổ hồng|giấy nhà đất|giấy về nhà đất"],"ids":["d2_title_c343c85df1af"],"note":"Lần đầu, cấp đổi, sang tên hay việc khác? Không mặc định đăng ký lần đầu."},
+    {"key":"death_certificate_input","all":["xin giấy báo tử|làm giấy báo tử|cấp giấy báo tử"],"ids":["d2_title_6696b9fb226a"],"always":true,"note":"Xin giấy báo tử hay đăng ký khai tử? Hai việc không đồng nhất."}
+  ],
+  "boundaries": [
+    {"key":"copy_not_signature","all":["sao y|chứng thực bản sao|công chứng bản photo|chứng bản sao"],"ids":[],"note":"Thủ tục chứng thực bản sao không có trong nhóm nguồn chữ ký/hợp đồng."},
+    {"key":"notary_not_attestation","all":["công chứng hợp đồng|công chứng di chúc"],"ids":["d2_title_1e0d3df69ad5"],"note":"Cần làm rõ công chứng hay chứng thực; không hoán đổi thẩm quyền."},
+    {"key":"other_school_level","all":["@school_transfer","@not_lower_secondary"],"ids":[],"note":"Ngoài nguồn THCS."},
+    {"key":"school_context_correction","all":["@not_lower_secondary"],"ids":[],"context_from":["d2_title_2dc6a6a0b92a"],"note":"Không giữ THCS khi người dùng sửa cấp học."},
+    {"key":"birth_repeat","all":["@birth","đăng ký lại|đăng kí lại|khai sinh lại|khai sanh lại|cấp lại|trích lục|sao lục|mất giấy|làm lại|xin lại|thất lạc"],"ids":[],"note":"Nguồn đăng ký lần đầu không dùng cho đăng ký lại hoặc cấp bản sao."},
+    {"key":"marriage_repeat","all":["kết hôn|hôn thú|cưới vợ|cưới chồng|lấy vợ|lấy chồng","đăng ký lại|cấp lại|trích lục|sao lục|mất giấy"],"ids":[],"note":"Nguồn đăng ký kết hôn không dùng cho trích lục/đăng ký lại."},
+    {"key":"death_repeat","all":["khai tử|chứng tử","đăng ký lại|cấp lại|trích lục|sao lục"],"ids":[],"note":"Không có thủ tục trích lục/đăng ký lại riêng trong 38 dòng."},
+    {"key":"adoption_not_parentage","all":["nhận con nuôi|đăng ký nuôi con nuôi|nhận một cháu làm con nuôi|nhận làm con nuôi"],"ids":[],"note":"Nhận nuôi và nhận cha mẹ con là hai việc khác nhau. Nguồn hiện có không thay thế thủ tục nuôi con nuôi. Bạn muốn hỏi việc nào?"},
+    {"key":"enterprise_not_household","all":["thành lập|mở công ty|đăng ký doanh nghiệp|đăng ký công ty|đóng cửa|giải thể|chấm dứt|tạm ngừng","công ty|doanh nghiệp tư nhân"],"ids":[],"note":"Thủ tục doanh nghiệp không phải hộ kinh doanh."},
+    {"key":"marriage_location_not_nationality","all":["kết hôn|hôn thú|cưới vợ|cưới chồng|lấy vợ|lấy chồng","trong nước|ở Việt Nam"],"context_from":["d2_title_1620179477b4"],"ids":["d2_title_6d6862db57ba","d2_title_1620179477b4"],"note":"Địa điểm trong nước chưa xác định quốc tịch. Bạn còn hỏi trường hợp có yếu tố nước ngoài không?"},
+    {"key":"number_plate_purchase","all":["mua|đặt mua","biển số nhà"],"ids":[],"note":"Mua sản phẩm không phải xin cấp số nhà."},
+    {"key":"foreign_residence","all":["tạm trú|thường trú","@foreign"],"ids":[],"note":"Nước ngoài không mặc định kết hôn."},
+    {"key":"license_outside","all":["giấy phép lái xe|đổi bằng lái|hộ chiếu|passport","xin|cấp|đổi|làm"],"ids":[],"note":"Ngoài catalog hiện tại, không suy ra từ giấy tờ trong hồ sơ."},
+    {"key":"scholarship_outside","all":["học bổng","du học|doanh nghiệp|khuyến khích học tập|toàn phần"],"ids":[],"note":"Không tự đồng nhất với học bổng chính sách."},
+    {"key":"social_insurance_funeral","all":["BHXH|bảo hiểm xã hội|lương hưu","@death","@funeral_help"],"ids":[],"note":"Không mặc định chế độ BHXH là hưu trí xã hội/bảo trợ xã hội."}
+  ]
+}

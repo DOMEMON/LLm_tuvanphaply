@@ -1,0 +1,105 @@
+name: public-g8-review
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: g8_review
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U app -d g8_review']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  backend:
+    build: ./backend
+    environment:
+      DB_HOST: postgres
+      DB_PORT: '5432'
+      DB_NAME: g8_review
+      DB_USER: app
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      WEB_ORIGIN: http://localhost:13008
+      WEB_ORIGINS: http://127.0.0.1:13008
+      SESSION_COOKIE_NAME: g8_review_session
+      SESSION_TTL_SECONDS: '7776000'
+      SESSION_COOKIE_SECURE: 'false'
+      AUTH_DEMO_LOGIN_ENABLED: 'false'
+      CHAT_JOBS_ENABLED: 'true'
+      CHAT_WORKERS: '2'
+      CHAT_JOB_TIMEOUT_SECONDS: '240'
+      RAG_ENABLED: 'true'
+      RAG_CORPUS_VERSION: company-tthc-9c38dde8-v1-adjudicated-fees-v2
+      G3_D2_ENABLED: 'true'
+      G3_PRIVATE_DATASET_PATH: /run/g3-dataset
+      G3_EXPECTED_ROWS: '42'
+      G3_CORPUS_SHA256: a1ffadf8965bc62741a9239e01fc9dbd220589e28ed72311da6581231f44cd04
+      G4_ANSWER_PLAN_ENABLED: 'true'
+      G5_INTENT_CONTEXT_ENABLED: 'true'
+      G5_HYBRID_ENABLED: 'false'
+      G5_SOURCE_MCP_ENABLED: 'false'
+      G5_REALTIME_MCP_ENABLED: ${G5_REALTIME_MCP_ENABLED:-false}
+      G5_SOURCE_MCP_URL: http://source-service:8091/mcp
+      G6_DICTIONARY_ENABLED: 'false'
+      G6_REACT_MODE: 'off'
+      G6_CANDIDATE_AUDIT_ENABLED: 'false'
+      G6_FORMS_ENABLED: ${G6_FORMS_ENABLED:-false}
+      G6_FORMS_PATH: /data/reviewed-forms
+      G6_FORMS_MANIFEST_SHA256: ${FORMS_MANIFEST_SHA256:-}
+      G8_EVIDENCE_MODE: direct_catalog
+      G7_PLANNER_URL: ${MODEL_URL:-http://host.docker.internal:8180/v1}
+      G7_PLANNER_MODEL: ${MODEL_NAME:-G8-Qwen3-8B-Q4}
+      G7_PLANNER_THINKING: 'false'
+      G7_DECOMPOSE: 'false'
+      G8_COMPACT_PLAN: 'false'
+      LANGCHAIN_TRACING_V2: 'false'
+      LANGSMITH_TRACING: 'false'
+    volumes:
+      - type: bind
+        source: ./data/administrative
+        target: /run/g3-dataset
+        read_only: true
+        bind: {create_host_path: false}
+      - type: bind
+        source: ${FORMS_PATH:-./data/private/reviewed-forms}
+        target: /data/reviewed-forms
+        read_only: true
+    command: [sh, -c, '.venv/bin/alembic upgrade head && exec .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --no-access-log --log-config logging.json']
+    depends_on:
+      postgres: {condition: service_healthy}
+    extra_hosts: ['host.docker.internal:host-gateway']
+    ports: ['127.0.0.1:18008:8000']
+    healthcheck:
+      test: [CMD, .venv/bin/python, -c, 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:8000/health")']
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 20
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: /api/v1
+        VITE_APP_STAGE: G8
+        VITE_VISITOR_MODE: 'true'
+        VITE_REQUIRE_ACCOUNT: 'false'
+    ports: ['127.0.0.1:13008:3000']
+    depends_on:
+      backend: {condition: service_healthy}
+  source-service:
+    profiles: [mcp]
+    build: ./source-service
+    environment:
+      G5_CORPUS_PATH: /run/g5-corpus
+      G5_REVIEW_TOKEN: ${G5_REVIEW_TOKEN:-}
+      G5_MCP_ALLOWED_HOSTS: source-service:8091
+      G5_REALTIME_MCP_ENABLED: ${G5_REALTIME_MCP_ENABLED:-false}
+      G6_LOOKUP_V2_ENABLED: 'true'
+    volumes:
+      - ./data/administrative:/run/g5-corpus:ro
+      - source_updates:/var/lib/g5-source
+volumes:
+  postgres_data:
+  source_updates:

@@ -1,0 +1,40 @@
+@import '@fontsource/be-vietnam-pro/vietnamese-400.css';
+@import '@fontsource/be-vietnam-pro/latin-400.css';
+@import '@fontsource/be-vietnam-pro/vietnamese-500.css';
+@import '@fontsource/be-vietnam-pro/latin-500.css';
+@import '@fontsource/be-vietnam-pro/vietnamese-600.css';
+@import '@fontsource/be-vietnam-pro/latin-600.css';
+
+:root {
+  font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+  color: var(--text); background: var(--page); font-synthesis: none;
+  text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased;
+  --page: #fafbf9; --sidebar: #f0f2ee; --surface: #ffffff;
+  --text: #232a24; --muted: #637066; --subtle: #717b72;
+  --line: #dfe4dc; --hover: #e6ebe2; --accent: #416044; --accent-hover: #2f4c32;
+  --accent-soft: #e8efe3; --on-accent: #ffffff; --user-bubble: #edf1e9;
+  --danger: #a33630; --danger-soft: #fff0ed; --shadow: 0 5px 28px rgb(38 56 37 / 5%);
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  --page: #1b1f1c; --sidebar: #151a16; --surface: #242a25;
+  --text: #e7ede6; --muted: #acb7ad; --subtle: #9ca99e;
+  --line: #384139; --hover: #303a31; --accent: #a6c59b; --accent-hover: #bfd8b6;
+  --accent-soft: #2b3a2c; --on-accent: #182317; --user-bubble: #303b2f;
+  --danger: #ffaaa3; --danger-soft: #382625; --shadow: 0 5px 28px rgb(0 0 0 / 12%);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+button, input, textarea { font: inherit; }
+button { cursor: pointer; color: inherit; }
+button:disabled { cursor: not-allowed; opacity: .5; }
+a { color: var(--accent); text-underline-offset: 3px; }
+button, a, input, textarea, summary, [role='menuitem'] { -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+button { transition: background-color 120ms, color 120ms, opacity 120ms; }
+button:active:not(:disabled) { transform: translateY(1px); }
+input, textarea { color: var(--text); background: var(--surface); }
+input::placeholder, textarea::placeholder { color: var(--subtle); opacity: 1; }
+::selection { background: var(--accent-soft); color: var(--text); }
+svg { flex-shrink: 0; }

@@ -1,0 +1,22 @@
+{
+  "schema_version": "g85-domain-v1",
+  "id": "documents_template",
+  "version": "v1",
+  "title": "Tài liệu của bạn",
+  "language": "vi",
+  "data_classification": "D1_PUBLIC_DEMO",
+  "policies": [],
+  "planner_instructions": [],
+  "scope": {
+    "description": "Hỏi đáp dựa trên bộ tài liệu được người vận hành lựa chọn. Hãy thay mô tả này bằng phạm vi thật của bộ nguồn trước khi kích hoạt.",
+    "included_topics": ["Nội dung có trong tập tài liệu được lựa chọn"],
+    "excluded_requests": ["Thực hiện giao dịch thay người dùng"],
+    "service_regions": [],
+    "evidence_policy": "approved_sources_only"
+  },
+  "attributes": [],
+  "capabilities": {"catalog": true, "checklist": false, "external_lookup": false, "actions": false},
+  "ingestion": {"adapter": "documents_v1", "require_review": true},
+  "retrieval": {"exact_lookup": false, "document_search": "lexical", "reranker": "off"},
+  "limits": {"max_tasks": 8, "max_plan_repairs": 1, "max_search_rounds": 1, "max_synthesis_calls": 1, "top_k": 6}
+}

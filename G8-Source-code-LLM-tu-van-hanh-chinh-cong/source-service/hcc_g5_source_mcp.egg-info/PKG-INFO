@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: hcc-g5-source-mcp
+Version: 0.1.0
+Requires-Python: <3.13,>=3.12
+Requires-Dist: mcp==2.2.0
+Requires-Dist: pydantic<3,>=2.12
+Requires-Dist: pypdf<7,>=6

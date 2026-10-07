@@ -1,0 +1,3 @@
+FROM g7-v3-frozen-source-service:baseline
+WORKDIR /app
+COPY --chown=appuser:appuser . /app
