@@ -16,10 +16,26 @@ def request_for(query, state):
     if (any(p.get('field') == 'submission_methods' for p in previous.get('predicates', []))
             and re.fullmatch(r'(?:the |vay )?ca hai (?:la sao|la gi|nghia la gi|nghia la sao)', fold(query))):
         return dict(previous, explain_value='cả hai')
-    return parse_catalog(query, CONFIG, previous)
+    # The extra word "việc" does not change exclusive method semantics.
+    normalized = re.sub(r'làm\s+việc\s+(trực tiếp|trực tuyến)', r'làm \1', query, flags=re.IGNORECASE)
+    return parse_catalog(normalized, CONFIG, previous)
 
 
 async def execute_catalog(data, task, state, filters, ai, rid, catalog):
+    if task.predicates:
+        from .mentor_catalog import execute_filtered
+        within = re.search(r'trong (?:so|nhom|danh sach) (?:do|tren)|cac muc tren',fold(task.quote))
+        if within and not state.catalog_context:
+            return {'answer':'Bạn muốn lọc trong danh sách nào? Mình chưa có một danh sách trước đó đủ rõ để đối chiếu.',
+                'request':{},'options':[],'sources':[],'items':[],
+                'missing':['catalog_reference'],'status':'NEED_CLARIFICATION'}
+        # Intersect server-owned previous result IDs, never model-guessed IDs.
+        pool = [c for c in catalog if c['code'] in state.displayed_options] if within else catalog
+        result = await execute_filtered(data, task, filters, ai, rid, pool)
+        if within:
+            result['answer'] = 'Lọc tiếp trong danh sách vừa trả lời.\n\n' + result['answer']
+            result['request']['within_previous'] = True
+        return result
     from app.rag.g7.contracts import Task
     from app.rag.g7.workflow import procedure_answer
     request = request_for(task.quote, state)

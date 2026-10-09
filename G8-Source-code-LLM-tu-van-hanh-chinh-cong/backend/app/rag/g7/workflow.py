@@ -85,18 +85,24 @@ def transition(previous, plan, options):
     # "còn lệ phí?" silently revert to the local default on the next turn.
     selected = [t for t in plan.tasks if t.kind == 'procedure']
     unresolved = [t for t in plan.tasks if t.kind == 'clarify']
-    if plan.relation in {'reset', 'replace'}:
+    if plan.relation == 'reset':
         state.active, state.pending = [], []
+    elif plan.relation == 'replace':
+        state.pending = []
+        if not selected:
+            state.active = []
     # Keep older subjects addressable during follow-ups/additions, without
     # automatically answering them or inheriting fields across subjects.
     selected_codes = {t.code for t in selected}
     state.active = [t for t in state.active if t.code not in selected_codes]
     state.active.extend(selected)
-    state.active = state.active[-36:]
+    state.active = state.active[-2:]
     resolved_codes = {t.code for t in selected}
     state.pending = [t for t in state.pending if not resolved_codes.intersection(t.candidates)]
     if unresolved:
         state.pending = unresolved
+        if not selected:
+            state.active = []  # An unresolved switch must not revive an older subject.
     state.focused = list(dict.fromkeys(t.code for t in selected))
     # Keep the last numbered menu while drilling into its members.
     keep_menu = (plan.relation in {'continue', 'extend'}
@@ -105,6 +111,7 @@ def transition(previous, plan, options):
                  and set(options) <= set(previous.displayed_options))
     state.displayed_options = (list(previous.displayed_options) if keep_menu
                                else list(dict.fromkeys(options)))
+    state.reference_limited = False
     return state
 
 
@@ -149,6 +156,7 @@ async def execute(data, plan, state, filters, ai, request_id):
                 texts.append('### Danh mục thủ tục đang hỗ trợ\n\n' + result['answer'])
                 continue
             title = 'Danh mục thủ tục đang hỗ trợ'
+            catalog_context = {'menu_only': True, 'domains': task.domains}
             # Model-selected catalog subset is authoritative after ID validation.
             # Do not broaden two loan services into all labor/business services.
             matches = ([index[code] for code in task.candidates] if task.candidates
@@ -173,6 +181,12 @@ async def execute(data, plan, state, filters, ai, request_id):
                       if candidates else 'Bạn nói rõ việc muốn thực hiện hoặc loại giấy tờ muốn xin nhé.')
             if candidates:
                 answer += '\n\n' + '\n'.join(f"{n}. {c['title']}" for n, c in enumerate(candidates, 1))
+            if task.question == 'G8_CONTEXT_LIMIT':
+                answer = 'Mình chỉ giữ ngữ cảnh hai thủ tục gần nhất, chưa xác định chắc số thứ tự trong câu trả lời dài trước đó. Bạn ghi tên thủ tục, hoặc hỏi rõ hai thủ tục gần nhất nhé.'
+            if task.question == 'G8_FILTER_UNSUPPORTED':
+                answer = 'Mình chưa hỗ trợ chắc điều kiện lọc này. Bạn tách thành các danh sách riêng hoặc hỏi theo mức có phí/miễn phí, hình thức nộp, thời gian, giấy tờ hay nơi tiếp nhận nhé. Mình chưa trả một danh sách rộng hơn thay cho yêu cầu của bạn.'
+            if task.question == 'G8_TASK_LIMIT':
+                answer = 'Mỗi tin nhắn hỗ trợ tối đa 8 ý. Bạn chia yêu cầu thành các nhóm tối đa 8 ý để mình xử lý đầy đủ nhé.'
             if task.question == 'G8_MARRIAGE_NATIONALITY':
                 answer = 'Hai bạn có quốc tịch nào? Việc từ nước ngoài về chưa đủ để chọn loại thủ tục kết hôn.'
             if not candidates and task.question == 'G8_HOUSE_BOOK_NUMBER':
@@ -202,6 +216,11 @@ async def execute(data, plan, state, filters, ai, request_id):
         texts.append(f'### {title}\n\n{answer}')
     next_state = transition(state, plan, options)
     next_state.catalog_context = catalog_context
+    from app.rag.g8.mentor_context import bound_context
+    next_state = bound_context(next_state)
+    if sum(t.kind == 'catalog' for t in plan.tasks) > 1:
+        next_state.displayed_options = []
+        next_state.catalog_context = {}  # Several independently numbered menus need a named selection.
     # Preserve G6 one-shot MCP consent for a single unambiguous active request.
     # Multi-task turns do not authorize a lookup for all tasks with a bare "yes".
     if len(plan.tasks) == 1 and parts[0]['kind'] == 'procedure':

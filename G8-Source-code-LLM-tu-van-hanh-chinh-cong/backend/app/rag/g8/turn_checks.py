@@ -23,6 +23,14 @@ def explicit_catalog(query, state, catalog):
     from app.rag.g7.contracts import Plan
     from app.rag.g7.planner import _service_place
     from app.rag.g8.catalog_browse import request_for
+    # Shared lexical shortcuts handle one menu only. Compound lists and fee
+    # predicates need the typed semantic planner to preserve independent needs.
+    qfold = fold(query)
+    if state.catalog_context.get('typed_predicates'):
+        return None  # Typed filters cannot use the legacy context parser.
+    if (re.search(r'\bphi\b|dong tien|thu tien|mat tien|\n|;', qfold)
+            or len(re.findall(r'liet ke|thu tuc nao|nhung thu tuc|cac thu tuc', qfold)) > 1):
+        return None
     request = request_for(query, state)
     if request is not None:
         return Plan(relation='continue' if request.get('explain_value') else 'replace',
@@ -82,7 +90,8 @@ def review_categories(plan, query, catalog, state=None):
     q = unicodedata.normalize('NFC', query).casefold()
     broad_death = (re.search(r'thủ tục.*liên quan.*(?:người.*(?:mất|chết)|qua đời)|(?:các|những).*thủ tục.*(?:mất|chết|qua đời)', q)
         and not re.search(r'khai sinh|kết hôn|khuyết tật|hưởng trợ cấp|liệt sĩ|người có công|nấu|vay vốn|đất đai', q))
-    if broad_death and len(plan.tasks) == 1 and plan.tasks[0].kind == 'catalog':
+    if (broad_death and not re.search(r'\bphi\b|dong tien|thu tien|mat tien', fold(query))
+            and len(plan.tasks) == 1 and plan.tasks[0].kind == 'catalog'):
         plan.tasks[0].domains, plan.tasks[0].candidates = ['death'], []
     # Residence alone says nothing about nationality, especially in mixed-place
     # requests. Do not turn "tôi sống ở Hà Nội" into a marriage clarification.
@@ -133,6 +142,8 @@ def requested_fields(text):
 
 
 def check_turn(plan, query, catalog, state):
+    if plan.overflow:
+        return plan
     plan = review_categories(plan, query, catalog, state)
     from app.rag.g7.planner import _service_place
     q = unicodedata.normalize('NFC', query).casefold()
@@ -164,6 +175,13 @@ def check_turn(plan, query, catalog, state):
     # Every task owns its service location. Never distribute one place globally.
     multi_places = len(re.findall(r'\btại\s+', q)) > 1
     for task in plan.tasks:
+        if task.kind == 'catalog' and not task.predicates:
+            from app.rag.g8.catalog_browse import request_for
+            filtered = request_for(task.quote, state)
+            if re.search(r'\bphi\b|dong tien|mat tien|khong qua|it nhat', fold(task.quote)):
+                raise ValueError('CATALOG_CONDITION_REQUIRES_TYPED_PREDICATES')
+            if re.search(r'truc tiep|truc tuyen|online|qua mang', fold(task.quote)) and not filtered:
+                raise ValueError('CATALOG_CONDITION_REQUIRES_TYPED_PREDICATES')
         if correction and task.kind == 'procedure' and not task.fields:
             previous = next((t for t in state.active if t.code == task.code), None)
             if previous:
@@ -225,9 +243,9 @@ def check_turn(plan, query, catalog, state):
             span = re.sub(re.escape(card['title']), ' [procedure] ', span, flags=re.IGNORECASE)
         wanted = requested_fields(span)
         if wanted and set(task.fields) != set(wanted):
-            if exclusive_sentence and re.search(r'cần|hỏi|muốn biết|cho (?:tôi|mình)|bao lâu|nộp ở đâu', span, re.IGNORECASE):
+            if span in query and len(plan.tasks) > 1 and span != query:
                 # Correct explicit fields only; subject ID still comes from the
-                # model. Shared/ambiguous clauses retain the bounded repair.
+                # model. Each literal local clause owns its information request.
                 task.fields = wanted
                 continue
             raise ValueError('FIELDS_MUST_MATCH_POSITIVE_CURRENT_TASK_NOT_HISTORY_OR_NEGATION')

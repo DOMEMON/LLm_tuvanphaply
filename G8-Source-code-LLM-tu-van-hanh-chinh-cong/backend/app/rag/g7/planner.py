@@ -49,9 +49,23 @@ def wire_contract(catalog):
         'properties': {'places': {'type': 'array', 'maxItems': 5,
                                   'items': {'type': 'string', 'maxLength': 100}},
                        'quote': {'type': 'string', 'maxLength': 300}}}
+    schema['$defs']['Task']['required'] = ['kind', 'quote', 'predicates']
     props = schema['$defs']['Task']['properties']
+    props['domains']['items'] = {'type': 'string', 'enum': list(DOMAINS)}
     props['code']['enum'] = ['', *titles.values(), *SUPPORT_BOUNDARIES]
     props['candidates']['items'] = {'type': 'string', 'enum': list(titles.values())}
+    # Discriminated wire grammar: ordinary lookups cannot emit filter facts.
+    regular = json.loads(json.dumps(schema['$defs']['Task']))
+    filtered = json.loads(json.dumps(regular))
+    other = json.loads(json.dumps(regular))
+    regular['properties']['kind']['enum'] = ['procedure']
+    regular['required'] = ['kind', 'quote', 'predicates', 'code', 'fields']
+    regular['properties']['code']['enum'] = [*titles.values(), *SUPPORT_BOUNDARIES]
+    regular['properties']['predicates']['maxItems'] = 0
+    filtered['properties']['kind']['enum'] = ['catalog']
+    other['properties']['kind']['enum'] = ['clarify', 'outside', 'chat']
+    other['properties']['predicates']['maxItems'] = 0
+    schema['$defs']['Task'] = {'oneOf': [regular, filtered, other]}
     return titles, schema
 
 
@@ -74,7 +88,31 @@ def validate_plan(plan, query, catalog, state):
         return tuple(sorted(normalize(v) for v in [*scope.places, scope.country, scope.province, scope.ward] if v))
     previous_scopes = {(t.code, scope_key(t.scope), t.scope.quote.casefold())
                        for t in [*state.active, *state.pending]}
+    if plan.overflow:
+        return Plan(relation='replace', tasks=[Task(kind='clarify', quote=query, question='G8_TASK_LIMIT')], overflow=True)
     for task in plan.tasks:
+        if task.predicates and task.kind != 'catalog':
+            raise ValueError('FILTER_REQUIRES_CATALOG_TASK')
+        from app.rag.g8.mentor_catalog import validate_predicate, bind_catalog_conditions
+        from app.rag.g8.catalog_browse import CONFIG
+        if task.kind == 'catalog':
+            # A filter is owned by its literal clause, never a paraphrase or
+            # the whole compound request. Case/whitespace differences are OK.
+            pattern = r'\s+'.join(re.escape(p) for p in task.quote.split())
+            match = re.search(pattern if pattern else r'(?!)', query, re.IGNORECASE)
+            if len(plan.tasks) == 1:
+                task.quote = query  # Keep leading follow-up/filter qualifiers.
+            elif match:
+                task.quote = match.group(0)
+            elif len(plan.tasks) == 1:
+                task.quote = query
+            else:
+                raise ValueError('CATALOG_REQUIRES_LITERAL_LOCAL_CLAUSE')
+            if len(plan.tasks) > 1 and task.quote.strip(' .!?') == query.strip(' .!?'):
+                raise ValueError('CATALOG_REQUIRES_LITERAL_LOCAL_CLAUSE')
+        task = bind_catalog_conditions(task, CONFIG)
+        for predicate in task.predicates:
+            validate_predicate(predicate)
         unsafe = task.code == 'unsupported_conceal_harm'
         if task.code in SUPPORT_BOUNDARIES:
             task.kind, task.code, task.fields, task.candidates, task.domains, task.question = 'outside', '', [], [], [], ''
@@ -94,7 +132,7 @@ def validate_plan(plan, query, catalog, state):
             raise ValueError('UNKNOWN_DOMAIN')
         if task.kind == 'procedure' and not task.code:
             raise ValueError('PROCEDURE_REQUIRES_CODE')
-        if task.kind == 'catalog' and not task.domains and not task.candidates:
+        if task.kind == 'catalog' and not task.domains and not task.candidates and not task.predicates:
             raise ValueError('CATALOG_REQUIRES_DOMAIN')
         if task.kind != 'procedure' and task.code:
             raise ValueError('NON_PROCEDURE_CODE')
@@ -169,7 +207,7 @@ def _death_browse(query):
     listing = (re.search(r'(?:liệt kê|kể tên|danh sách).{0,90}(?:thủ tục|dịch vụ)', q)
                or re.search(r'(?:có|những|các).{0,35}thủ tục.{0,30}(?:nào|gì)', q))
     death = (re.search(r'qua đời|khai tử|mai táng|hỏa táng|từ trần', q)
-             or re.search(r'(?:bố|mẹ|cha|ông|bà|người thân|người nhà|người).{0,30}(?:mất|chết)', q))
+             or re.search(r'\b(?:bố|mẹ|cha|ông|bà|người thân|người nhà|người)\b.{0,30}\b(?:mất|chết)\b', q))
     return bool(listing and death and not re.search(r'kết hôn|khai sinh', q))
 
 
@@ -209,6 +247,9 @@ def _explicit_coordinated_services(query, catalog):
             return None
     # Only shared, positive field requests qualify for this legacy shortcut.
     if re.search(r'không|đừng|chưa|ở đâu|bao lâu|mấy ngày|mang giấy|số nhà', q):
+        return None
+    from app.rag.g8.turn_checks import requested_fields
+    if len(requested_fields(query) or []) != 1:
         return None
     fee = bool(re.search(r'phí|\btiền\b|mất tiền|tốn bao nhiêu', q))
     documents = bool(re.search(r'hồ sơ|giấy tờ|chuẩn bị giấy', q))
@@ -274,7 +315,9 @@ def reconcile_plan(plan, query, catalog, state):
             return plan
     if any(t.question == 'G8_UNSAFE_ASSISTANCE' for t in plan.tasks):
         return plan  # Never let a legacy browsing guard undo a refusal.
-    if _death_browse(query):
+    if plan.overflow:
+        return plan
+    if _death_browse(query) and not re.search(r';|hồ sơ|giấy tờ|lệ phí|nơi nộp', query, re.IGNORECASE):
         # A request for the *list* is not five simultaneous applications. The
         # reviewed death domain excludes stale marriage context, while the
         # executor still labels support as conditional and non-exhaustive.
@@ -329,7 +372,7 @@ def reconcile_plan(plan, query, catalog, state):
                     and index[t.code]['label'] in unrelated)]
 
     if re.match(r'\s*hồ sơ\b', query.casefold()) and not re.search(
-            r'phí|nơi nộp|thời gian|online|trực tuyến|tất cả|toàn bộ', query.casefold()):
+            r'phí|nơi nộp|ở đâu|bao lâu|mấy ngày|thời gian|hình thức|online|trực tuyến|tất cả|toàn bộ', query.casefold()):
         for task in plan.tasks:
             if task.kind == 'procedure':
                 task.fields = ['required_documents']
@@ -352,8 +395,14 @@ def reconcile_plan(plan, query, catalog, state):
 
 
 async def understand(query, state, catalog, history, client, request_id):
+    from app.rag.g8.mentor_context import bound_context
+    state = bound_context(state.model_copy(deep=True))
     from app.rag.g8.turn_checks import menu_selection, explicit_catalog
-    selected_menu = menu_selection(query, state) or explicit_catalog(query, state, catalog)
+    from app.rag.g8.mentor_context import recent_pair, exceeds_limit
+    if exceeds_limit(query, catalog):
+        return Plan(relation='replace', tasks=[Task(kind='clarify', quote=query, question='G8_TASK_LIMIT')], overflow=True)
+    from app.rag.g8.mentor_context import forgotten_ordinal
+    selected_menu = recent_pair(query, state) or forgotten_ordinal(query, state) or menu_selection(query, state) or explicit_catalog(query, state, catalog)
     if selected_menu is not None:
         return selected_menu
     query = unicodedata.normalize('NFC', query)
@@ -369,7 +418,7 @@ async def understand(query, state, catalog, history, client, request_id):
                'CATALOG': [{k: v for k, v in c.items() if k not in {'id', 'label'}} for c in catalog],
                'STATE': {
                    'awaiting_rephrase': state.awaiting_rephrase,
-                   'active': [t.model_dump() for t in state.active if t.code in state.focused],
+                   'active': [t.model_dump() for t in state.active],
                    'pending': [t.model_dump() for t in state.pending],
                    'other_topics': [{'code': t.code, 'title': index[t.code]['title']}
                                     for t in state.active if t.code not in state.focused and t.code in index],
@@ -378,7 +427,8 @@ async def understand(query, state, catalog, history, client, request_id):
                # names. They are NOT user intent and caused invented scope and
                # false switches. The structured state already records the offered
                # choices, fields, questions and active subjects without these facts.
-               'RECENT_USER_REQUESTS': [m.content[:1200] for m in history if m.role == 'user'][-2:],
+               'CATALOG_FILTER_CONTEXT': state.catalog_context,
+               'RECENT_USER_REQUESTS': [],  # G8 bounded structured memory is authoritative.
                'ACTIVE_FOCUS': [{'code': c, 'title': index[c]['title']} for c in state.focused if c in index],
                'DISPLAYED_OPTIONS_IN_ORDER': [{'position': i, 'code': c, 'title': index[c]['title']}
                     for i, c in enumerate(state.displayed_options, 1) if c in index],
@@ -424,7 +474,7 @@ async def understand(query, state, catalog, history, client, request_id):
             'max_tokens': 3500, 'stream': False,
             'response_format': {'type': 'json_schema', 'json_schema': {
                 'name': 'turn_plan', 'strict': True, 'schema': schema}},
-        }, timeout=155)
+        }, timeout=float(os.environ.get('G8_PLANNER_TIMEOUT', '155')))
         response.raise_for_status()
         response_data = response.json()
         usage = response_data.get('usage') or {}
@@ -441,7 +491,7 @@ async def understand(query, state, catalog, history, client, request_id):
         return choice['message']['content']
 
     try:
-        async with asyncio.timeout(160):
+        async with asyncio.timeout(float(os.environ.get('G8_PLANNER_TIMEOUT', '155')) + 5):
             if os.environ.get('G7_DECOMPOSE', 'false').lower() == 'true':
                 resolution = await resolve(query, state, catalog, history, client, base, model)
                 schema = classification_contract(list(titles.values()), len(resolution.requests))

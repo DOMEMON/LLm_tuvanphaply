@@ -74,6 +74,8 @@ LLM hiểu yêu cầu, chọn đối tượng và quan hệ giữa lượt hội
 
 Một câu nhiều ý có trạng thái riêng cho ý đủ nguồn, thiếu, cần làm rõ hoặc ngoài phạm vi. State giữ focus/thứ tự lựa chọn để xử lý “mục thứ hai”, đổi chủ đề, sửa nhu cầu và hỏi tiếp. Lịch sử khác version dataset không được đưa lại vào context mới.
 
+G8 hiện giới hạn **8 task mỗi lượt** và **2 thủ tục gần nhất trong context suy diễn**, tách khỏi lịch sử chat lưu lâu dài. G8 còn hỗ trợ câu hỏi ngược bằng bộ lọc có kiểu trên evidence đã review (phí, hình thức, thời gian, giấy tờ/nơi nộp và lĩnh vực), nhiều danh sách hoặc kết hợp với tra cứu từng thủ tục. Xem [README G8](G8-Source-code-LLM-tu-van-hanh-chinh-cong/README.md#khả-năng-hỏi-đáp-hiện-tại) để biết phạm vi và giới hạn; thay đổi này không áp dụng vào G8.5.
+
 ## 3. Công nghệ và điểm đọc code
 
 | Thành phần | Công nghệ / vị trí |
@@ -135,7 +137,7 @@ npm run build
 
 Test offline không cần GPU/hosted LLM: kiểm tra contract/state/hash/review/binding và hồi quy. Test phần mềm không chứng minh model đúng mọi câu. Đánh giá thêm với model thật, câu hỏi mới và hội thoại dài; phân biệt lỗi retrieval, planner và evidence selection. Câu đã dùng sửa hệ thống là dev/regression, không gọi là test mù.
 
-Bản bàn giao đã kiểm tra build Docker độc lập và startup/migration với database mới cho cả hai hệ thống. Bộ test đi kèm: G8 backend 56, G8.5 backend 17, MCP source-service 78, frontend mỗi hệ thống 46 ca. Smoke trình duyệt chạy lượt model thật trên corpus G8 và ví dụ giả lập G8.5, kiểm tra visitor/renewal, reload, tab mới và mở lại bằng cookie. Đây là các kiểm tra có giới hạn, không phải accuracy benchmark.
+Bản bàn giao đã kiểm tra build Docker độc lập và startup/migration với database mới cho cả hai hệ thống. Bộ test đi kèm: **G8 backend 179** (sau cập nhật context/multi-intent/truy vấn ngược), G8.5 backend 17, MCP source-service 78, frontend mỗi hệ thống 46 ca. Smoke trình duyệt của bản bàn giao ban đầu chạy lượt model thật trên corpus G8 và ví dụ giả lập G8.5, kiểm tra visitor/renewal, reload, tab mới và mở lại bằng cookie. Đây là các kiểm tra có giới hạn, không phải accuracy benchmark.
 
 Smoke có thể chạy từ gốc repo sau khi đã `npm ci` và cài Chromium trong frontend (`npx playwright install chromium`):
 

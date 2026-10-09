@@ -71,6 +71,13 @@ def after_validate(state: Planning):
 def repair(state: Planning):
     messages = list(state['messages'])
     hint = ''
+    if state['error'] == 'CATALOG_REQUIRES_LITERAL_LOCAL_CLAUSE':
+        hint = (' Mỗi danh sách cần quote riêng trích nguyên văn mệnh đề của chính nó. '
+                'Không chép cả câu chứa nhiều nhóm vào từng task. Tách tại dấu chấm phẩy '
+                'hoặc dòng đánh số, giữ đủ điều kiện của từng nhóm.')
+    if state['error'] == 'FILTER_REQUIRES_CATALOG_TASK':
+        hint = (' Task procedure chỉ có code và fields; predicates phải là []. '
+                'Chỉ câu hỏi tìm danh sách thủ tục theo điều kiện mới dùng kind=catalog và predicates.')
     if state['error'] in {'SCOPE_WITHOUT_USER_EVIDENCE', 'SCOPE_NAME_NOT_IN_QUOTE'}:
         hint = (' Với thủ tục mới không ghi nơi thực hiện trong CURRENT_USER, scope={places:[],quote:""}. '
                 'Không sao chép địa phương từ lịch sử, PROFILE hay thủ tục khác. '

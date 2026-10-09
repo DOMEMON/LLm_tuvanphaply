@@ -13,7 +13,15 @@
 - `frontend/`: đầy đủ UI và lockfile.
 - `data/administrative/`: JSONL chuẩn hóa đủ phục vụ, decision/review records; không workbook raw, gold questions hay user history.
 
-Release hạch toán 42 dòng nguồn; catalog runtime lọc còn 38 thủ tục hỗ trợ. Không phải dữ liệu mới cập nhật toàn quốc. Phần thiếu/xung đột phải abstain/báo riêng; phạm vi địa phương theo cấu hình nghiệp vụ gốc. Classification `D2_COMPANY_REAL` và provenance không bị đổi chỉ vì source công khai theo yêu cầu bàn giao.
+Release hạch toán 42 dòng nguồn; catalog runtime có **36 thủ tục hỗ trợ**. Không phải dữ liệu mới cập nhật toàn quốc. Phần thiếu/xung đột phải abstain/báo riêng; phạm vi địa phương theo cấu hình nghiệp vụ gốc. Classification `D2_COMPANY_REAL` và provenance không bị đổi chỉ vì source công khai theo yêu cầu bàn giao.
+
+## Khả năng hỏi đáp hiện tại
+
+- **Tối đa 8 ý mỗi tin nhắn**, có thể xen kẽ các field của những thủ tục khác nhau. Ví dụ: giấy tờ kết hôn, nơi nộp khai sinh, lệ phí khai tử. Mỗi task giữ field, scope và evidence riêng; vượt giới hạn phải yêu cầu chia nhỏ, không cố tình bỏ ý thứ chín.
+- **Context giữ 2 thủ tục gần nhất** bằng state có cấu trúc, không đưa nguyên văn các câu hỏi cũ vào planner. Lịch sử chat vẫn lưu trong PostgreSQL và mở lại được bằng cookie. Nêu tên thủ tục cũ là yêu cầu mới; tham chiếu thứ tự không còn đủ context phải hỏi lại. Menu của một danh sách catalog là bản đồ lựa chọn riêng, không phải context của toàn bộ thủ tục.
+- **Truy vấn ngược**: lọc các thủ tục có phí/miễn phí, chỉ trực tiếp/có trực tuyến, thời gian theo số ngày, hoặc field giấy tờ/nơi nộp chứa một cụm từ; có thể kết hợp lĩnh vực và nhiều điều kiện AND. Có thể hỏi nhiều danh sách cùng câu hoặc kết hợp danh sách với tra cứu một thủ tục; tổng vẫn tối đa 8 task. “Trong số đó” lọc tiếp trên kết quả trước do backend giữ ID.
+
+Planner tạo `CatalogPredicate` có kiểu; `mentor_catalog.py` lọc trên field evidence đã review, không dùng danh sách đáp án model ghi nhớ. Miễn phí bản chính nhưng thu phí bản sao không phải miễn phí toàn bộ; “chỉ trực tiếp” khác “cả hai”. Nguồn thiếu/chưa đọc chắc được là unknown, không tự coi là miễn phí hay không hỗ trợ. OR phức tạp, so sánh mức tiền hoặc tiêu chí ngoài nguồn chưa được cam kết; phải làm rõ thay vì trả danh sách rộng hơn. `mentor_context.py` giới hạn context và xử lý các tham chiếu.
 
 ## Chạy độc lập
 
@@ -50,7 +58,7 @@ uv sync --frozen
 uv run pytest -q
 ```
 
-56 test offline kiểm tra graph/contract/guard/catalog/hội thoại với corpus đi kèm. Không cần GPU/MCP live. `source-service/` cũng có test, chạy `uv sync --frozen` và `uv run pytest -q` tại thư mục đó.
+**179 test offline** kiểm tra graph/contract/guard/catalog/hội thoại với corpus đi kèm, gồm giới hạn 8 task, migration state cũ về 2 thủ tục, bộ lọc ngược và binding evidence riêng từng ý. Test chạy trực tiếp trên source trong thư mục này; không cần snapshot riêng của tác giả, GPU hoặc MCP live. `source-service/` cũng có test, chạy `uv sync --frozen` và `uv run pytest -q` tại thư mục đó. Test offline dùng plan/model giả lập để kiểm tra contract và executor, không phải accuracy benchmark của LLM thật.
 
 Trong `frontend/` (46 test bao gồm visitor và account compatibility):
 
@@ -60,7 +68,23 @@ npm test
 npm run build
 ```
 
-Test live ví dụ: “Khai sinh cần hồ sơ gì, kết hôn có lệ phí không?”, rồi sửa một ý, hỏi tiếp theo thứ tự hoặc hỏi thủ tục ngoài scope. Đối chiếu text/evidence, địa phương và trạng thái từng ý. HTTP 200 không chứng minh nội dung đúng.
+Test live ví dụ:
+
+```text
+Tôi muốn biết giấy tờ kết hôn, nơi nộp khai sinh, lệ phí khai tử.
+Liệt kê thủ tục có thu phí; cho tôi hồ sơ kết hôn; liệt kê thủ tục chỉ nộp trực tiếp thuộc văn hóa xã hội.
+```
+
+Trong một conversation mới, thử lần lượt:
+
+```text
+Kết hôn cần giấy tờ gì?
+Thêm khai sinh, nộp ở đâu?
+Bây giờ khai tử cần giấy tờ gì?
+Hai thủ tục gần nhất nộp ở đâu?
+```
+
+Lượt cuối phải là khai sinh + khai tử, không kéo lại kết hôn. Đối chiếu text/evidence, địa phương và trạng thái từng ý. HTTP 200 không chứng minh nội dung đúng; câu đã dùng phát triển chỉ là DEV/regression, cần thêm câu mới để đánh giá độc lập. Model vẫn có thể làm rõ hoặc từ chối quá mức; không coi các bộ lọc có kiểu là đã giải quyết mọi cách hỏi tự nhiên.
 
 ## Vận hành và giới hạn
 
