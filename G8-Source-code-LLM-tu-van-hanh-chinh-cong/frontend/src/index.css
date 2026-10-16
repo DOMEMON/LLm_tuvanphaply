@@ -10,7 +10,7 @@
   color: var(--text); background: var(--page); font-synthesis: none;
   text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased;
   --page: #fafbf9; --sidebar: #f0f2ee; --surface: #ffffff;
-  --text: #232a24; --muted: #637066; --subtle: #717b72;
+  --text: #232a24; --muted: #637066; --subtle: #637066;
   --line: #dfe4dc; --hover: #e6ebe2; --accent: #416044; --accent-hover: #2f4c32;
   --accent-soft: #e8efe3; --on-accent: #ffffff; --user-bubble: #edf1e9;
   --danger: #a33630; --danger-soft: #fff0ed; --shadow: 0 5px 28px rgb(38 56 37 / 5%);
@@ -38,3 +38,8 @@ input, textarea { color: var(--text); background: var(--surface); }
 input::placeholder, textarea::placeholder { color: var(--subtle); opacity: 1; }
 ::selection { background: var(--accent-soft); color: var(--text); }
 svg { flex-shrink: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  button { transition: none; }
+  button:active:not(:disabled) { transform: none; }
+}

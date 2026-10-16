@@ -11,7 +11,7 @@ export type Citation = {
   metadata: Record<string, unknown>
 }
 export type Grounding = {
-  parts?: { task_id: string; kind: string; procedure_id: string | null; title: string; answer: string; grounding: Grounding }[] | null
+  parts?: { task_id: string; result_status?: string; kind: string; procedure_id: string | null; title: string; answer: string; grounding: Grounding }[] | null
   request_id: string
   evidence_bundle_id: string
   status: GroundingStatus

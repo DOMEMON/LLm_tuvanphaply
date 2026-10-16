@@ -1,0 +1,4 @@
+name,category,deposit_vnd,return_days
+Alpha,display,100000,7
+Beta,audio,0,3
+Gamma,camera,,5

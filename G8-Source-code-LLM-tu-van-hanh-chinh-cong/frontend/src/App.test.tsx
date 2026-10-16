@@ -1,7 +1,8 @@
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import App, { FeedbackPanel } from './App'
+import App from './App'
+import { FeedbackPanel } from './components/MessageView'
 import * as api from './services/api'
 import type { Conversation, CreateMessageResponse, Grounding, Message, User } from './types/api'
 
@@ -101,7 +102,7 @@ describe('G6 account workspace', () => {
     getAccountsMock.mockResolvedValue([])
     render(<App />)
     await waitFor(() => expect(screen.getByLabelText('Câu hỏi của bạn')).toBeEnabled())
-    expect(screen.getByRole('heading', { name: 'Thủ tục nào bạn đang cần?' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Hệ thống tư vấn dịch vụ Hành chính công' })).toBeInTheDocument()
     expect(api.createConversation).not.toHaveBeenCalled()
     expect(screen.queryByText(/Google/)).not.toBeInTheDocument()
   })
@@ -386,6 +387,6 @@ describe('G6 account workspace', () => {
     await user.click(await screen.findByText('Nguồn tham chiếu'))
     expect(screen.queryByText(/Nguồn nội bộ đã duyệt cho demo\./)).not.toBeInTheDocument()
     expect(screen.getByText(/^Nguồn:/)).toBeInTheDocument()
-    expect(screen.getByText('Nguồn nội bộ đã duyệt').closest('a')).toBeNull()
+    expect(screen.getAllByText('Nguồn nội bộ đã duyệt').every(node => !node.closest('a'))).toBe(true)
   })
 })

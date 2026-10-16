@@ -23,6 +23,8 @@ const conversation = {id:'thread-1',title:'Hội thoại đã lưu',
 
 describe('Cookie visitor workspace', () => {
   beforeEach(() => {
+    // A clean checkout has no private .env. Session scope still needs a base URL.
+    vi.stubEnv('VITE_API_BASE_URL', 'http://localhost/api/v1')
     localStorage.clear()
     vi.clearAllMocks()
     vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({matches:false,
@@ -39,6 +41,7 @@ describe('Cookie visitor workspace', () => {
   it('creates a visitor automatically without a login dialog or an empty thread', async () => {
     render(<App />)
     await waitFor(() => expect(screen.getByLabelText('Câu hỏi của bạn')).toBeEnabled())
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(api.startGuest).toHaveBeenCalledTimes(1)
     expect(api.createConversation).not.toHaveBeenCalled()
     expect(screen.queryByRole('button',{name:'Đăng nhập'})).not.toBeInTheDocument()

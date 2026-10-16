@@ -1,0 +1,8 @@
+{
+  "name": "g85-workspace-ui-checks",
+  "private": true,
+  "version": "0.7.0",
+  "scripts": { "test": "node ../g85/tabular_lab/ui_redesign_smoke.cjs" },
+  "devDependencies": { "@playwright/test": "1.63.0" },
+  "engines": { "node": ">=20.19.0" }
+}

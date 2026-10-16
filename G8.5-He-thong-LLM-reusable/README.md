@@ -1,98 +1,135 @@
-# Hệ thống LLM reusable — G8.5
+# G8.5 — Tự động tạo package từ dữ liệu dạng bảng cho hệ thống LLM
 
-Đầy đủ source shell backend/frontend và lõi tái sử dụng, **không chọn sẵn dataset nấu ăn, không chứa ReciFineGold hoặc history của deployment đang chạy**. Export này không thay đổi phiên bản trên máy tác giả. Một deployment chọn một knowledge package đã review; thay package/profile cùng contract thì giữ planner, engine, state và UI.
+Bản hiện tại thay deployment document-RAG cũ bằng **workspace upload CSV/XLSX → tự tạo package → hỏi đáp**. API, web tĩnh, loader và runtime nằm trong thư mục này; không cần snapshot G8 hay package/dataset của tác giả.
 
-## 1. Đọc code
+![Pipeline tạo và sử dụng package G8.5](../assets/g85-auto-package-pipeline.png)
 
-| Thành phần | Vai trò |
-| --- | --- |
-| `backend/app/rag/g85/contracts.py` | Task/Plan/State/transition; tách version dataset/profile |
-| `planner.py` | LLM hiểu nhiều ý, focus/scope; LangGraph plan/validate/repair |
-| `engine.py` | Execute từng task, retrieval, chọn segment IDs, render trạng thái |
-| `knowledge.py`, `retriever.py` | BM25 lexical và interface LangChain Core |
-| `package_loader.py` | Schema/hash/count/ID/review/capability/scale, fail closed |
-| `extensions.py` | Registry policy opt-in, mặc định rỗng; không chạy code từ dataset |
-| `backend_bridge.py`, `transport.py` | Boundary HTTP shell/package/model endpoint |
-| `backend/app/` | Cookie, ownership, history, FIFO jobs, feedback |
-| `frontend/` | UI đọc domain title/attribute/capability qua `/api/v1/domain` |
-| `backend/tools/` | Importer JSONL/CSV và validator, không activate khi ingest |
+## Nguyên lý
 
-Không kèm loader/policy hành chính G8, recipe config hoặc script thử model cũ; không cần G8/image lịch sử để build.
-
-## 2. Tạo knowledge package
-
-Chuẩn bị Python 3.12 + uv; trong `backend/` chạy `uv sync --frozen`. Input JSONL/CSV có cột chuỗi ID/title/text, tùy chọn URL. Mapping mẫu trong `profiles/mapping.json`. Copy profile template ra vùng data riêng và sửa ID/title/language/scope/classification đúng nguồn. Template không chứng nhận nội dung hay quyền sử dụng.
-
-Thử với ba bản ghi Alpha/Beta/Gamma giả lập, không phải kiến thức thiết bị thật:
-
-```powershell
-# Trong backend/
-uv run python -m tools.ingest --input ../examples/documents.jsonl --profile ../profiles/documents.template.json --mapping ../profiles/mapping.json --version software-demo-v1 --output ../data/packages/software-demo-v1 --reviewed
-uv run python -m tools.validate --package ../data/packages/software-demo-v1
-```
-
-`--reviewed` là xác nhận operator sau khi rà nội dung/quyền sử dụng, không phải kiểm duyệt AI. Output dùng version/thư mục mới, không ghi đè package cũ. `data/packages/` đã ignore; không tự commit tài liệu nội bộ. Với dữ liệu thật thay input/profile bằng nguồn của bạn.
+1. `Table` đọc bảng, xác định kiểu/ô thiếu/tính duy nhất, mẫu giá trị và SHA-256; không tự giải mã mã số hoặc đơn vị.
+2. `package_builder.analyze` gọi LLM đề xuất metadata, rồi rà mô tả/cột tên hiển thị. Đây vẫn là đề xuất, không phải nhãn nghiệp vụ đã được chuyên gia duyệt.
+3. Chương trình tạo mapping, ID dòng, bằng chứng từng ô và locator từ nguồn; giữ dòng trùng tên riêng biệt, phân biệt null với số 0.
+4. Loader kiểm tra schema/hash, mapping và liên kết từng ô trước khi nạp.
+5. `package_runtime` nối với planner/engine: tra trực tiếp bản ghi + trường, BM25 lấy đoạn hoặc compiler/DuckDB truy vấn toàn bảng. Không lấy top-k ứng viên làm đáp án cho danh sách toàn bảng.
 
 ```text
-manifest.json     # version, file hashes, count, số đoạn approved
-profile.json      # title/domain/language/scope/capability/attribute/limits
-groups.json       # nhóm chủ đề
-entities.jsonl    # stable ID, title, metadata/facts
-sources.jsonl     # source ID, URL nếu có, hash
-passages.jsonl    # text gốc, source/entity binding, hash, locator, review_status
+manifest.json      phiên bản, hash, số lượng file/bản ghi
+profile.json       phạm vi, trường, capability, giới hạn
+table.json         cấu trúc vật lý và mapping cột
+entities.jsonl     ID/tên từng dòng, không gộp tên trùng
+passages.jsonl     bằng chứng nguyên văn từng ô có giá trị
+sources.jsonl      định danh nguồn
+groups.json        nhóm bản ghi
+source.csv/xlsx    file nguồn để đối chiếu lại
 ```
 
-Passage không APPROVED không được dùng; hash/ID sai hay thiếu approved passage làm validator/startup từ chối. Hash là integrity, không phải chữ ký/chứng minh nội dung đúng. Importer không dịch hay sinh tri thức; PDF/DOCX/Excel cần ETL/chunk trước.
+Package tự động không được đánh dấu đã được con người duyệt. Loader kiểm tra tính toàn vẹn/liên kết nguồn, không chứng minh model hiểu đúng mọi câu hỏi.
 
-## 3. Chạy
+## Chạy bằng Docker
+
+Chuẩn bị model `/v1/chat/completions` hỗ trợ JSON-schema output. Tham chiếu: Qwen3-8B Q4_K_M qua llama.cpp; xem [README gốc](../README.md#chạy-trên-máy-riêng). Không kèm weights hay tự khởi động model của tác giả.
 
 ```powershell
-# Trong thư mục G8.5
+# Trong thư mục G8.5-He-thong-LLM-reusable
 Copy-Item .env.example .env
-# Sửa DB_PASSWORD, MODEL_URL, MODEL_NAME.
-# KNOWLEDGE_PACKAGE_PATH=./data/packages/software-demo-v1
+# G85_MODEL_URL: endpoint /v1, container phải gọi được.
+# G85_MODEL_NAME: alias đúng trên model server.
 docker compose --env-file .env config --quiet
 docker compose up -d --build --wait
 ```
 
-Mở **http://localhost:13085**; backend **http://localhost:18085/health**, **/api/v1/domain**. Cần model `/v1/chat/completions` hỗ trợ JSON schema; xem README repo. /health xác nhận shell/package/DB, không chứng minh model trả đúng câu.
+Mở **http://localhost:13085**. UI, API, `/docs`, `/health` cùng origin. Một process Uvicorn, một worker xử lý, tối đa tám yêu cầu đang xử lý/chờ cộng lại. Không tăng `--workers` khi chưa có queue/khóa dùng chung.
 
-DB project `public-g85-review` mới, tự migrate; package bind read-only. UI gọi API cùng origin qua nginx. Visitor không cần login, cookie khôi phục phiên/history, content ở PostgreSQL. Template tắt form/checklist/external lookup/actions.
+File/package/context lưu trong volume `datasets`. `docker compose down` giữ volume, **`down -v` xóa dữ liệu**. Không import volume PostgreSQL của G8.5 cũ vào workspace này. Bản source cũ vẫn có trong lịch sử Git.
 
-Ví dụ kiểm thử: “Alpha kiểm tra bao lâu, Beta hỗ trợ chế độ nào?”, “Gamma tổng cộng chính xác bao nhiêu phút, riêng bước cuối thì sao?”, “Chỉ cho tôi điều kiện dừng kiểm tra Alpha”. Đối chiếu nguồn: 5 phút bước cuối không phải tổng gồm thời gian chờ chưa ghi.
+## Dùng giao diện
 
-## 4. Test, bảo mật và giới hạn
+- Bấm **Thêm bảng dữ liệu** hoặc kéo thả CSV/XLSX. Có thể thử `examples/devices.csv`: dữ liệu giả lập, không phải quy định cho mượn thiết bị thật.
+- Header ở dòng đầu; workbook nhiều sheet cần nhập đúng tên sheet. Hệ thống không tự chọn sheet theo ý định người dùng.
+- Ký hiệu ô thiếu là tùy chọn: khai báo khi nguồn quy định `NA`, `?` hoặc giá trị khác là thiếu; mặc định không coi mọi chữ `NA` là null.
+- Chọn bảng bên trái để hỏi. Có thể giữ nhiều dataset và chuyển qua lại, nhưng mỗi câu hỏi chỉ chạy trên một dataset, chưa join các bảng.
+- **Cấu trúc dữ liệu** có header, metadata/cảnh báo và tải package ZIP. Kết quả có mở nguồn, sao chép, tải CSV; UI có tìm bảng, đổi tên hiển thị, xuất hội thoại, sáng/tối và bố cục di động.
 
-```powershell
-# Trong backend/: offline, không cần GPU
-uv run pytest -q
-# Trong frontend/
-npm ci
-npm test
-npm run build
-```
+Ví dụ với bảng giả lập:
 
-17 test reusable với dữ liệu giả lập: review/hash, entity retrieval, version boundary, menu/focus và evidence binding. UI có 46 test API/component/session/visitor/account compatibility. Test không chứng minh relevance đúng mọi câu: đoạn đúng nguồn vẫn có thể chưa trả lời đúng nhu cầu, cần đánh giá live với câu mới.
+> Alpha có `deposit_vnd` bao nhiêu và Beta có `return_days` bao nhiêu?
+>
+> Bảng có bao nhiêu dòng và trung bình `return_days` là bao nhiêu?
+>
+> Liệt kê `name` và `return_days` khi `deposit_vnd = 0`.
 
-Lõi có contract/guard tổng quát: quote hiện tại, ID/field, task binding, ordinal, missing evidence; không phải “không có rule”. Không có bảng đáp án theo record. Profile mô tả capability/data; policy nghiệp vụ phải opt-in, kiểm thử liên domain.
+Tối đa **8 intent/lượt**. Context giữ **hai bản ghi gần nhất được xác định**, không nhớ cả danh sách kết quả. Dataset/package version và revision bảo vệ ranh giới ngữ cảnh/ghi đồng thời.
 
-Giới hạn: 64 entity trong catalog planner, 8 task/lượt, một lần repair; BM25 lexical, chưa dense multilingual/reranker/dịch có kiểm chứng. Trả text nguồn nguyên văn. Một bước có thời lượng không tự là tổng; thuộc tính thiếu phải báo thiếu. Citation không tự chứng minh semantic completeness.
+Danh sách bảng, token và lịch sử UI nằm trong `sessionStorage` của tab. Reload giữ phiên tab; đóng tab/xóa dữ liệu có thể mất danh sách hiển thị. File/context vẫn còn ở server; chưa có đồng bộ tài khoản hoặc khôi phục token đã mất.
 
-Không expose model/DB/MCP ra Internet. Public cần HTTPS, cookie Secure, Origin/rate limit, backup/history policy. `.env`/weights/DB/private corpus được ignore. Đổi model cần đo lại planner/selector, không coi mọi endpoint tương đương.
+## Python, API và CLI
 
-## 5. Cuối cùng: thay dataset cần thay gì?
-
-1. Nguồn mới được phép sử dụng, mapping cột và profile mới đúng ngôn ngữ/phạm vi.
-2. Ingest version mới và validate như mục 2. Importer baseline search documents với attributes rỗng; direct cần package có passage gắn attribute và profile exact lookup, không tạo fact bằng model.
-3. Đợi hết request/job đang chạy, đổi `KNOWLEDGE_PACKAGE_PATH` trong `.env`.
-4. Recreate backend, reload nginx nếu backend đổi IP:
+Python 3.12, từ thư mục G8.5:
 
 ```powershell
-docker compose up -d --no-deps --force-recreate --wait backend
-docker compose exec frontend nginx -t
-docker compose exec frontend nginx -s reload
+python -m venv .venv
+.venv/Scripts/python.exe -m pip install -r requirements.txt
+$env:G85_MODEL_URL = 'http://127.0.0.1:18085/v1'
+$env:G85_MODEL_NAME = 'G85-Tabular-Qwen3-8B-Q4'
+.venv/Scripts/python.exe -m uvicorn g85.tabular_lab.service:app --host 127.0.0.1 --port 8086 --workers 1 --no-access-log
 ```
 
-5. Reload UI, tạo hội thoại mới, chạy evaluation dataset mới. State/history khác version không vào context mới; history cũ giữ trong DB. Rollback bằng chọn package cũ, recreate và reload như trên.
+Linux/macOS dùng `.venv/bin/python` và cú pháp môi trường phù hợp. `G85_DATA_DIR` tùy chọn đổi thư mục lưu; mặc định `.runtime/g85-tabular-service/datasets`.
 
-Không cần sửa title/UI/planner/engine hay train lại model mỗi dataset cùng contract; cần thay expected task/status/evidence và đo recall/grounding. Parser mới, >64 entity, multilingual embeddings, reranker, action/checklist/policy mới là mở rộng capability cần code + kiểm thử, không chỉ đổi data. Không sửa lõi theo đáp án từng record để tăng điểm test.
+Upload API dùng **raw body**, không phải multipart; ví dụ khi API local chạy cổng 8086:
+
+```powershell
+$dataset = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8086/v1/datasets?filename=devices.csv' -ContentType 'text/csv' -InFile examples/devices.csv
+$headers = @{ 'X-Dataset-Token' = $dataset.dataset_token }
+$body = @{ version = $dataset.version; question = 'Có bao nhiêu dòng dữ liệu?' } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8086/v1/datasets/$($dataset.dataset_id)/query" -Headers $headers -ContentType 'application/json; charset=utf-8' -Body ([System.Text.Encoding]::UTF8.GetBytes($body))
+```
+
+Giữ token phía người gọi, không đưa vào URL, Git hay logs. Schema đầy đủ ở `/docs`:
+
+| Route | Chức năng |
+| --- | --- |
+| `POST /v1/datasets?filename=...` | Upload/tạo package, trả ID, source version và token |
+| `GET /v1/datasets/{id}` | Đọc profile, cần `X-Dataset-Token` |
+| `POST /v1/datasets/{id}/query` | `question` + `version`, tùy chọn cặp conversation/revision |
+| `GET /v1/datasets/{id}/package` | Tải ZIP, cần token |
+| `POST /v1/datasets/{id}/conversations` | Tạo context, body `version` |
+| `GET /v1/datasets/{id}/conversations/{conversation_id}` | Đọc context/revision |
+
+Sai token/ID: 404; version/hash/revision: 409; input lỗi: 422; file quá lớn: 413; queue đầy: 429; lỗi xử lý/model: 503. `/health` không kiểm tra readiness/chất lượng model.
+
+CLI tạo package cần model sẵn sàng; output phải là thư mục **mới**:
+
+```powershell
+.venv/Scripts/python.exe -m g85.package_builder --input examples/devices.csv --output .runtime/packages/devices-v1
+# Excel: thêm --sheet 'Tên sheet'.
+# Ký hiệu thiếu theo nguồn: thêm --missing-values '["","?"]'.
+```
+
+`g85/ingest.py` còn hỗ trợ document JSONL/CSV với profile/mapping chuẩn bị riêng. Đây là đường tùy chọn, không phải upload bảng tự động. UI hiện chưa có upload ZIP package để activate trực tiếp.
+
+## Kiểm thử
+
+```powershell
+.venv/Scripts/python.exe -m pytest g85/tests g85/tabular_lab -q
+```
+
+149 test offline kiểm tra đọc bảng, null/số lớn, schema/hash/binding, multi-intent, context/revision, token isolation, queue và cấu hình endpoint. Model giả lập không đo accuracy LLM.
+
+UI acceptance dùng API giả lập, không gọi model:
+
+```powershell
+npm ci --prefix tools
+npx --prefix tools playwright install chromium
+node g85/tabular_lab/ui_redesign_smoke.cjs
+```
+
+## Giới hạn và public deployment
+
+- CSV UTF-8/XLSX, một bảng có header/một sheet; tối đa 20 MiB, 32 cột, 100.000 ô. Từ chối header trùng, input rỗng và công thức Excel. Chưa có workbook tự do, join, group-by, top-N hay quy đổi đơn vị.
+- Lọc literal, đếm và tổng hợp chạy trên toàn bảng. Điều kiện cần hiểu phủ định/ngoại lệ trong văn bản không được thay bằng kiểm tra từ khóa; bộ lọc ngữ nghĩa chưa bật trong API.
+- Không suy ra chính sách, ý nghĩa mã hoặc đơn vị ngoài nguồn. Ô thiếu không tự là 0. BM25 là tìm kiếm từ khóa; planner và metadata vẫn có thể sai, chưa có bảo đảm đúng với mọi dataset/cách hỏi.
+- Policy nghiệp vụ cần được người phát triển đăng ký tin cậy và kiểm thử; không chạy mã từ dataset. Các thử nghiệm kiểm tra semantic lookup không được âm thầm bật trong API.
+- Compose chỉ bind localhost. Token theo dataset chưa thay user/tenant auth, thu hồi token, quota, audit hay chính sách xóa dữ liệu. Public cần bổ sung các lớp này và HTTPS; không public model server trực tiếp.
+
+Không kèm dataset ngoài, weights, history, upload hay token thật. Font/icon có giấy phép trong `g85/tabular_lab/static/assets/`.

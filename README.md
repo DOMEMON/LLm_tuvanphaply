@@ -1,133 +1,104 @@
-# LLM tư vấn hành chính công và hệ thống hỏi đáp tái sử dụng
+# Hệ thống tư vấn pháp lý và tự động tạo knowledge package
 
-Repository bàn giao source code để đọc, đánh giá kiến trúc, chạy kiểm thử và triển khai trên máy riêng. Gồm **G8 — LLM tư vấn hành chính công** và **G8.5 — hệ thống LLM reusable với dataset thay thế được**. Mỗi hệ thống có backend, frontend, migration database, lockfile và Docker riêng; không cần snapshot/image lịch sử của tác giả.
+Hai hướng triển khai cùng nguyên tắc: **LLM hiểu yêu cầu, chương trình thực thi và đối chiếu dữ liệu nguồn**. Repository gồm mã nguồn, kiểm thử, cấu hình triển khai mẫu và hai hình kiến trúc hiện tại; không chứa model weights, lịch sử người dùng hay cấu hình riêng của máy phát triển.
 
-Pipeline được phát triển cho hỏi đáp thủ tục hành chính/pháp lý theo nguồn. G8.5 tách lõi hỏi đáp khỏi dataset và chính sách hành chính để tái sử dụng cho tài liệu nội bộ hoặc lĩnh vực khác **trong capability hiện có**. Đây không phải luật sư AI, không phải mô hình fine-tune để ghi nhớ corpus, và không tự bảo đảm dữ liệu pháp lý còn hiệu lực.
-
-## 1. Hai thư mục source
-
-| Thư mục | Vai trò | Hướng dẫn |
+| Hệ thống | Mục đích | Source và hướng dẫn |
 | --- | --- | --- |
-| `G8-Source-code-LLM-tu-van-hanh-chinh-cong/` | Source code LLM tư vấn hành chính công; giữ catalog và các boundary nghiệp vụ | [README G8](G8-Source-code-LLM-tu-van-hanh-chinh-cong/README.md) |
-| `G8.5-He-thong-LLM-reusable/` | Hệ thống LLM reusable, chọn knowledge package riêng cho deployment | [README G8.5](G8.5-He-thong-LLM-reusable/README.md) |
+| **G8 — Hệ thống tư vấn pháp lý: Hỗ trợ tra cứu thủ tục hành chính** | Tra cứu 36 thủ tục thuộc phường Tăng Nhơn Phú, Thành phố Hồ Chí Minh; multi-intent và hội thoại nhiều lượt | [G8](G8-Source-code-LLM-tu-van-hanh-chinh-cong/README.md) |
+| **G8.5 — Tự động tạo package từ dữ liệu dạng bảng cho hệ thống LLM** | Upload CSV/Excel → phân tích metadata → tạo package → hỏi đáp trên dataset được chọn | [G8.5](G8.5-He-thong-LLM-reusable/README.md) |
+
+## G8: tra cứu thủ tục hành chính
+
+![Kiến trúc G8 — Hệ thống tư vấn dịch vụ Hành chính công](assets/g8-system-architecture.png)
+
+- Tối đa **8 intent trong một tin nhắn**, kể cả các trường thông tin xen kẽ giữa nhiều thủ tục.
+- Ngữ cảnh có cấu trúc giữ **2 thủ tục gần nhất**; lịch sử hội thoại lưu riêng trong PostgreSQL.
+- Tra cứu hồ sơ, lệ phí, thời gian, nơi nộp và các trường trong nguồn. Truy vấn ngược dùng bộ lọc có kiểu trên bằng chứng đã rà soát; điều kiện chưa đủ nguồn không được tự suy ra.
+- Qwen3-8B qua llama.cpp lập kế hoạch JSON; LangGraph kiểm tra và cho phép tối đa một lần sửa kế hoạch. Kết quả ràng buộc với đúng thủ tục, trường và nguồn.
+- React/TypeScript cung cấp chat, lịch sử, nguồn tham chiếu, phản hồi và checklist. Hàng đợi FIFO có hai worker theo cấu hình mẫu.
+
+Ví dụ: “Cho tôi giấy tờ đăng ký kết hôn, nơi nộp khai sinh và lệ phí khai tử”. Khả năng trả lời phụ thuộc dữ liệu nguồn và việc xác định đúng yêu cầu, không phải cam kết đúng với mọi cách hỏi.
+
+## G8.5: từ bảng dữ liệu đến package tự động
+
+![Pipeline G8.5 — tự động tạo, kiểm chứng và sử dụng knowledge package](assets/g85-auto-package-pipeline.png)
+
+G8.5 hiện **không còn chỉ là bản document-RAG phải chuẩn bị package thủ công**. Workspace mới tiếp nhận CSV/XLSX và quản lý nhiều dataset riêng biệt:
+
+1. Đọc bảng có header, chọn một sheet và khai báo ký hiệu ô thiếu khi cần; giữ nguyên giá trị nguồn.
+2. LLM đề xuất mô tả/vai trò các cột, rồi rà lại metadata để chọn cột tên hiển thị và tạo mapping.
+3. Chương trình tạo profile, ID từng dòng, bằng chứng từng ô, locator và SHA-256; đóng thành package có phiên bản.
+4. Loader kiểm chứng schema, hash, ánh xạ và liên kết về nguồn trước khi nạp.
+5. Người dùng chọn dataset để hỏi. Runtime tra cứu, tìm đoạn nguồn hoặc truy vấn toàn bảng có kiểm tra; mỗi intent có kết quả và bằng chứng riêng.
+
+Không cần sửa mapping theo tên từng dataset trong luồng upload tự động. Metadata do model đề xuất **không phải chứng nhận hiểu đúng nghiệp vụ**; hệ thống không tự tạo chính sách, giải mã mã số hoặc thay dữ liệu nguồn bằng kiến thức của model.
+
+UI có kéo thả file, tìm/chuyển bảng, xem cấu trúc, hội thoại mới, mở bằng chứng, sao chép, tải CSV, tải package ZIP và sáng/tối. Mỗi dataset có token/version riêng; context giữ hai bản ghi gần nhất. **Chọn một dataset cho mỗi câu hỏi**, chưa hỗ trợ join hay truy vấn chéo các dataset.
+
+## Cấu trúc source
 
 ```text
 .
 ├── G8-Source-code-LLM-tu-van-hanh-chinh-cong/
-│   ├── backend/         # FastAPI, auth, jobs, state, grounding, G8 graph
-│   ├── frontend/        # React, TypeScript, Vite; chat và lịch sử
-│   ├── source-service/  # MCP tra cứu hành chính, opt-in
-│   ├── data/administrative/  # Corpus JSONL đã chuẩn hóa
-│   ├── compose.yaml
-│   └── .env.example
+│   ├── backend/                  # FastAPI, hội thoại, jobs, planner/executor G8
+│   ├── frontend/                 # React + TypeScript + Vite
+│   ├── source-service/           # MCP tùy chọn, mặc định tắt
+│   ├── data/administrative/      # Corpus chuẩn hóa và provenance
+│   └── compose.yaml
 ├── G8.5-He-thong-LLM-reusable/
-│   ├── backend/         # API + reusable planner/executor/package loader
-│   ├── frontend/        # UI đọc title/capability từ profile
-│   ├── profiles/        # Profile và mapping mẫu, chưa chọn dataset thật
-│   ├── examples/        # 3 bản ghi giả lập kiểm thử phần mềm
-│   ├── compose.yaml
-│   └── .env.example
-└── tools/               # Kiểm tra cấu trúc bản public
+│   ├── g85/package_builder.py    # Bảng → metadata/mapping → package
+│   ├── g85/package_runtime.py    # Kết nối package với lõi hỏi đáp
+│   ├── g85/runtime/              # Planner, hợp đồng, thực thi, loader
+│   ├── g85/tabular_lab/          # API, đọc bảng, DuckDB, context, web tĩnh
+│   ├── g85/tests/                # Kiểm thử package/runtime
+│   ├── examples/devices.csv      # Dữ liệu giả lập của bản source
+│   └── compose.yaml
+├── assets/                       # Hai hình kiến trúc hiện tại
+└── tools/                        # Kiểm tra bản source công khai
 ```
 
-Không đưa vào Git: ReciFineGold/bộ pilot/package recipe, model weights, credentials, `.env` thật, DB/lịch sử chat, log, tunnel state, `.runtime`, node_modules, báo cáo nghiên cứu/thử nghiệm và các deployment G1–G7 cũ. Ba README là hướng dẫn bản bàn giao, không phải các báo cáo riêng trên máy tác giả. Alpha/Beta/Gamma là ví dụ viết mới, không lấy từ dataset bên ngoài.
+G8 còn namespace `g3`, `g4`, `g5`, `g7` cho các module nền được import; không phải các hệ thống cũ phải khởi động. G8.5 mới độc lập, không cần database, frontend hay snapshot G8.
 
-G8 còn namespace `app/rag/g3`, `g4`, `g5`, `g7` vì đang import các module nền đó; không phải các server cũ phải khởi động. G8.5 không mang theo engine/policy hành chính của G8.
+## Chạy trên máy riêng
 
-## 2. Pipeline hệ thống
+Cần **Docker + Compose** và model server `/v1/chat/completions` hỗ trợ JSON-schema output. Cấu hình tham chiếu dùng **Qwen3-8B GGUF Q4_K_M qua llama.cpp**, không fine-tune để ghi nhớ dataset. Weights và giấy phép model do người triển khai chuẩn bị riêng.
 
-![Kiến trúc hệ thống G8.5 — Reusable QA Engine với Flexible Dataset](assets/g85-pipeline.jpg)
-
-<details>
-<summary>Xem sơ đồ luồng chi tiết (Mermaid)</summary>
-
-```mermaid
-flowchart TD
-    U[Người dùng] --> UI[React frontend]
-    UI --> GW[Reverse proxy / HTTPS gateway khi public]
-    GW --> API[FastAPI: phiên cookie, conversation, jobs, feedback]
-    API <--> DB[(PostgreSQL: phiên, lịch sử, state, jobs)]
-    API --> Q[Worker queue / FIFO]
-    Q --> S[Load conversation state]
-    S --> P[LLM semantic planner: multi-intent / multi-turn]
-    P --> V[LangGraph: validate plan / tối đa một lần repair]
-    V --> E[Engine / executor]
-    K[Knowledge package: profile, entities, sources, passages, groups, manifest] --> P
-    K --> E
-    E --> D[Direct lookup: trường có cấu trúc]
-    E --> R[Document search: BM25 lexical]
-    R --> ES[LLM chọn evidence / segment IDs]
-    D --> C[Kiểm tra binding: task, source, segment]
-    ES --> C
-    C --> T[Kết quả từng ý: answered / partial / clarify / outside / insufficient]
-    T --> SAVE[Save state và answer]
-    SAVE --> DB
-    SAVE --> RENDER[Render response từ bằng chứng]
-    RENDER --> UI
-```
-
-</details>
-
-Sơ đồ mô tả hướng kiến trúc reusable QA, không coi tất cả capability đều bật ở mọi dataset. G8 chủ yếu dùng direct cho các trường hành chính đã cấu trúc; document package của G8.5 đi nhánh search. Direct chỉ dùng khi package hỗ trợ.
-
-LLM hiểu yêu cầu, chọn đối tượng và quan hệ giữa lượt hội thoại, không tự thêm giá trị rồi gắn citation. Với search G8.5, model chọn ID đoạn/segment và server render lát văn bản gốc; evidence phải thuộc đúng task. Direct lấy các trường/đoạn đã review, không sinh fact mới.
-
-Một câu nhiều ý có trạng thái riêng cho ý đủ nguồn, thiếu, cần làm rõ hoặc ngoài phạm vi. State giữ focus/thứ tự lựa chọn để xử lý “mục thứ hai”, đổi chủ đề, sửa nhu cầu và hỏi tiếp. Lịch sử khác version dataset không được đưa lại vào context mới.
-
-G8 hiện giới hạn **8 task mỗi lượt** và **2 thủ tục gần nhất trong context suy diễn**, tách khỏi lịch sử chat lưu lâu dài. G8 còn hỗ trợ câu hỏi ngược bằng bộ lọc có kiểu trên evidence đã review (phí, hình thức, thời gian, giấy tờ/nơi nộp và lĩnh vực), nhiều danh sách hoặc kết hợp với tra cứu từng thủ tục. Xem [README G8](G8-Source-code-LLM-tu-van-hanh-chinh-cong/README.md#khả-năng-hỏi-đáp-hiện-tại) để biết phạm vi và giới hạn; thay đổi này không áp dụng vào G8.5.
-
-## 3. Công nghệ và điểm đọc code
-
-| Thành phần | Công nghệ / vị trí |
-| --- | --- |
-| API | Python 3.12, FastAPI, Pydantic; `backend/app/main.py` |
-| Persistence | PostgreSQL, SQLAlchemy async, Alembic; `models.py`, `jobs.py`, `migrations/` |
-| UI | React, TypeScript, Vite; `frontend/src/App.tsx`, `components/MessageView.tsx` |
-| Cookie session | `accounts.py`, `auth.py`, `browser_sessions.py`, frontend `services/browserSession.ts` |
-| Planner G8 | `app/rag/g7/planner.py`, graph/guard trong `app/rag/g8/` |
-| Lõi G8.5 | `app/rag/g85/{planner,contracts,engine,knowledge,retriever,package_loader}.py` |
-| Onboarding G8.5 | `backend/tools/ingest.py`, `tools/validate.py`, `profiles/` |
-| Model server | HTTP `/v1/chat/completions`, JSON schema output; chạy riêng |
-
-Triển khai tham chiếu dùng **Qwen3-8B, GGUF Q4_K_M** qua llama.cpp. “8B” là khoảng 8 tỷ tham số, “Q4_K_M” là lượng tử hóa weights giảm tài nguyên, không phải fine-tune trên dataset dự án. Không kèm weights. Endpoint khác cần đúng contract JSON schema và kiểm thử lại chất lượng/timeout/context; tương thích HTTP chưa đủ.
-
-Dependency được khóa trong `backend/uv.lock`, `frontend/package-lock.json`, G8 `source-service/uv.lock`. Đường model local không cần API key trả phí. Hosted API cần bổ sung auth transport và rà quyền gửi dữ liệu, không gửi tài liệu nội bộ sang cloud chỉ bằng cách đổi URL.
-
-## 4. Chạy trên máy riêng
-
-Cần Docker + Compose và model server tương thích. Test/importer ngoài Docker cần Python 3.12 + `uv`; frontend cần Node đáp ứng `package.json`. Xem README từng hệ thống cho lệnh đầy đủ.
-
-Model server tham khảo, thay đường dẫn GGUF và thông số theo phần cứng:
+Ví dụ model server cho G8.5; thay đường dẫn/tài nguyên theo máy:
 
 ```powershell
-llama-server -m /path/to/model.gguf --alias G8-Qwen3-8B-Q4 --host 0.0.0.0 --port 8180 --jinja --reasoning off --ctx-size 24576 --parallel 2 --n-gpu-layers 99 --temp 0 --seed 42 --chat-template-kwargs '{"enable_thinking":false}'
+llama-server -m /path/to/Qwen3-8B-Q4_K_M.gguf --alias G85-Tabular-Qwen3-8B-Q4 --host 0.0.0.0 --port 18085 --jinja --reasoning off --ctx-size 12288 --parallel 1 --n-gpu-layers 99 --temp 0 --seed 42 --chat-template-kwargs '{"enable_thinking":false}'
 ```
 
-`0.0.0.0` cho container gọi model qua host; **chặn cổng model từ Internet bằng firewall**. Không public inference endpoint không có auth. CPU có thể chạy với cấu hình phù hợp nhưng chậm hơn. Đây là cấu hình tham khảo, không cam kết tốc độ/VRAM. Xem [llama.cpp server](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md) về JSON schema và serving.
+Model nghe `0.0.0.0` để container truy cập qua host; **phải chặn truy cập bên ngoài bằng firewall**. Không public inference endpoint không có xác thực. Endpoint khác cần được kiểm thử lại schema, context, chất lượng và thời gian xử lý.
 
-Trong mỗi thư mục, copy `.env.example` sang `.env`, thay password riêng đủ mạnh và sửa model URL/name. G8.5 còn phải tạo/chọn knowledge package. Sau đó:
+Trong thư mục hệ thống muốn chạy:
 
 ```powershell
+Copy-Item .env.example .env
+# Sửa model URL/name; G8 còn cần DB_PASSWORD riêng đủ mạnh.
+docker compose --env-file .env config --quiet
 docker compose up -d --build --wait
 ```
 
-| Hệ thống | Frontend review | Note |
-| --- | --- | --- |
-| G8 | [http://localhost:13008](https://g8-hanh-chinh.tail108af4.ts.net/) | hệ thống trả lời theo dataset hành chính công do phường Tăng Nhơn Phú HCM cấp |
-| G8.5 | [http://localhost:13085](https://g85-nau-an.tail108af4.ts.net/) | hệ thống được reuse bằng một bộ data nấu ăn ReciFineGold để test thử khả năng reuse |
+| Hệ thống | Địa chỉ local mặc định |
+| --- | --- |
+| G8 | http://localhost:13008 — backend http://localhost:18008/health |
+| G8.5 | http://localhost:13085 — UI, `/docs`, `/health` cùng origin |
 
-Project/port/volume review tách khỏi deployment tham chiếu. Backend build từ Python + lockfile, không dùng image riêng `g7-...:baseline`. DB mới tự migrate; corpus/package bind read-only, **không import corpus vào bảng chat**. Không dùng `down -v` khi cần giữ history.
+G8.5 mở trang là có thể upload, **không cần tạo package trước khi chạy**. Model phải sẵn sàng trước khi upload/hỏi. `/health` chỉ báo API/hàng đợi, không chứng nhận model sẵn sàng. Các địa chỉ trên không phải link public luôn hoạt động.
 
-## 5. Kiểm thử và đánh giá
+G8 giữ dữ liệu trong volume PostgreSQL; G8.5 dùng volume `datasets`. Không dùng `docker compose down -v` nếu cần giữ dữ liệu. Không tái sử dụng volume của deployment cũ khi chưa sao lưu/kiểm tra tương thích.
 
-Trong `backend/` của mỗi hệ thống:
+## Kiểm thử
+
+G8 backend, trong `G8-Source-code-LLM-tu-van-hanh-chinh-cong/backend/`:
 
 ```powershell
 uv sync --frozen
 uv run pytest -q
 ```
 
-Trong `frontend/`:
+G8 frontend, trong `frontend/`:
 
 ```powershell
 npm ci
@@ -135,42 +106,22 @@ npm test
 npm run build
 ```
 
-Test offline không cần GPU/hosted LLM: kiểm tra contract/state/hash/review/binding và hồi quy. Test phần mềm không chứng minh model đúng mọi câu. Đánh giá thêm với model thật, câu hỏi mới và hội thoại dài; phân biệt lỗi retrieval, planner và evidence selection. Câu đã dùng sửa hệ thống là dev/regression, không gọi là test mù.
-
-Bản bàn giao đã kiểm tra build Docker độc lập và startup/migration với database mới cho cả hai hệ thống. Bộ test đi kèm: **G8 backend 179** (sau cập nhật context/multi-intent/truy vấn ngược), G8.5 backend 17, MCP source-service 78, frontend mỗi hệ thống 46 ca. Smoke trình duyệt của bản bàn giao ban đầu chạy lượt model thật trên corpus G8 và ví dụ giả lập G8.5, kiểm tra visitor/renewal, reload, tab mới và mở lại bằng cookie. Đây là các kiểm tra có giới hạn, không phải accuracy benchmark.
-
-Smoke có thể chạy từ gốc repo sau khi đã `npm ci` và cài Chromium trong frontend (`npx playwright install chromium`):
+G8.5, trong `G8.5-He-thong-LLM-reusable/`, Python 3.12:
 
 ```powershell
-node tools/browser_smoke.cjs --system g8
-node tools/browser_smoke.cjs --system g85
-# Tùy chọn --query "câu hỏi theo dataset đang phục vụ" --expect "đoạn cần có"
+python -m venv .venv
+.venv/Scripts/python.exe -m pip install -r requirements.txt
+.venv/Scripts/python.exe -m pytest g85/tests g85/tabular_lab -q
 ```
 
-Không có `--query` thì chỉ thử shell/history, không gọi model. Smoke tạo phiên/hội thoại synthetic riêng, không đọc phiên người dùng có sẵn và không lưu giá trị cookie ra file/log.
+Linux/macOS dùng `.venv/bin/python`. Test offline dùng dữ liệu tổng hợp và model giả lập; không cần GPU và **không phải accuracy benchmark LLM**. README từng hệ thống có hướng dẫn UI. Từ gốc repo chạy `python tools/check_public_tree.py` để rà file đưa lên Git.
 
-Hành chính/pháp lý cần kiểm tra địa phương, hiệu lực, nguồn áp dụng. Review không đồng nghĩa nội dung luôn còn hiệu lực. Repo không đưa ra accuracy tổng quát hay production SLA dựa trên vài ảnh demo.
+## Phạm vi và bảo mật
 
-## 6. Cookie, bảo mật và public deployment
+- **G8** phục vụ nguồn của phường Tăng Nhơn Phú, không tự áp dụng cho địa phương khác hoặc bảo đảm thủ tục còn hiệu lực. 36 thủ tục runtime khác với 42 dòng release nguồn.
+- **G8.5** nhận một bảng có header mỗi upload, CSV UTF-8 hoặc XLSX; tối đa 20 MiB, 32 cột và 100.000 ô cho package. Chưa có PDF/DOCX, join, workbook bố cục tự do, quy đổi đơn vị hoặc giải mã codebook. Bộ lọc ngữ nghĩa tự do trên văn bản chưa bật trong API.
+- Chuỗi `NA` được giữ nguyên trừ khi người dùng khai báo nó là ký hiệu thiếu; ô thiếu không tự là 0. Hash kiểm tra tính toàn vẹn, không chứng minh dữ liệu/metadata đúng về ngữ nghĩa.
+- **G8** dùng cookie trình duyệt để khôi phục lịch sử ở server; tài khoản Google giống nhau trên hai máy không tự đồng bộ cookie. **G8.5** giữ danh sách bảng/token/lịch sử hiển thị trong `sessionStorage` của tab; file và context lưu riêng ở server. Chưa có đồng bộ tài khoản giữa thiết bị.
+- Compose mẫu chỉ bind localhost. G8.5 chưa có tenant/account auth đầy đủ, thu hồi token, quota đĩa hay chức năng xóa dữ liệu cho production. Public cần HTTPS, xác thực, rate limit, quản trị dữ liệu và sao lưu, không chỉ đổi host sang `0.0.0.0`.
 
-Visitor UI tự tạo/khôi phục phiên: mở trang là hỏi được. Cookie chỉ giữ mã phiên opaque, `HttpOnly`, `SameSite=Lax`; chat/state nằm trong PostgreSQL. Phiên mặc định 90 ngày, gia hạn sau xác thực. Backend vẫn xác thực token và quyền sở hữu mỗi conversation, không dùng guest account chung.
-
-Xóa cookie/ẩn danh/đổi thiết bị không tự lấy lịch sử cũ; cookie không phải backup. Web Locks phối hợp các tab khi tạo phiên, browser không hỗ trợ Web Locks không có cùng bảo đảm chống tạo phiên đồng thời.
-
-Compose review bind **127.0.0.1**, chưa phải production public. Khi ra Internet cần HTTPS gateway, cookie Secure, Origin allowlist đúng domain, rate limit/queue, che route nội bộ, backup DB và chính sách lưu/xóa lịch sử. Không kèm account/config/state tunnel tác giả.
-
-G8 có MCP source-service opt-in, tra nguồn hiện tại sau sự đồng ý của người dùng. G8.5 mặc định `external_lookup=false`, `actions=false`, không tự gọi Internet khi hỏi đáp. Dependency MCP còn trong lockfile kế thừa shell không có nghĩa capability đã bật.
-
-Source công khai không tự chuyển quyền sở hữu/license của model, dependency hoặc dataset. Repo không cấp license mới cho dữ liệu bên thứ ba. Corpus G8 giữ classification/provenance gốc, không thay thế cơ sở dữ liệu pháp luật chính thức.
-
-## 7. Cuối cùng: khi thay dataset G8.5 cần thay gì?
-
-1. Nguồn được phép sử dụng, ID/title/text, mapping cột JSONL/CSV.
-2. Profile mới: tên/domain/ngôn ngữ/scope/capability/attributes/limits đúng nguồn; mặc định `policies=[]`, `planner_instructions=[]`.
-3. Package version mới: manifest/profile/groups/entities/sources/passages, hash/locator/review hợp lệ.
-4. `.env` → `KNOWLEDGE_PACKAGE_PATH`, recreate backend lúc hết lượt đang chạy, reload nginx nếu backend đổi IP. Frontend đọc profile qua `/api/v1/domain`, không cần build lại để đổi tên dataset.
-5. Bộ expected task/status/evidence lấy từ nguồn mới; đo recall/grounding và hội thoại tiếp nối.
-
-Trong contract/capability hiện có, không cần sửa lõi theo tên từng record hay train lại model. Importer baseline chỉ xử lý document JSONL/CSV, giữ nguyên text; PDF/DOCX/Excel cần ETL trước, direct lookup cần package cấu trúc theo attribute. Catalog hiện tối đa **64 entity**, **8 task/lượt**, BM25 lexical, một lần repair. Dataset lớn, dense multilingual retrieval, reranker, dịch có kiểm chứng, action hoặc adapter mới có thể cần mở rộng code và kiểm thử. “Reusable” không có nghĩa bỏ bất kỳ file nào vào cũng tự chạy tốt.
-
-Nguồn đầy đủ hơn có thể giúp coverage nhưng không tự sửa mọi lỗi planner/retrieval/relevance. Xem [G8.5](G8.5-He-thong-LLM-reusable/README.md) cho lệnh ingest/validate/activate/rollback.
+Không kèm báo cáo nội bộ, bộ benchmark riêng, dataset thử tải từ bên thứ ba, tài khoản, `.env` thật, tunnel state, logs hay weights. Các README là hướng dẫn source. Quyền sử dụng model, thư viện và dữ liệu bên thứ ba vẫn theo giấy phép tương ứng.

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#fafcfb">
+<title>G8.5 · Hỏi đáp dữ liệu</title>
+<link rel="icon" type="image/svg+xml" href="/workspace/assets/favicon.svg">
+<link rel="stylesheet" href="/workspace/assets/fonts.css"><link rel="stylesheet" href="/workspace/app.css?v=20261016"><script src="/workspace/app.js?v=20261016" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#question">Đến ô đặt câu hỏi</a>
+<div class="workspace">
+<aside id="sidebar" aria-label="Bộ dữ liệu">
+  <div class="sidebar-top"><a class="brand" href="/" aria-label="G8.5 Hỏi đáp dữ liệu"><span class="brand-mark" data-icon="table"></span><span><strong>G8.5</strong><span>Hỏi đáp dữ liệu</span></span></a><button id="close-sidebar" class="icon-button mobile-only" type="button" aria-label="Đóng danh sách dữ liệu" data-icon="close"></button></div>
+  <button class="primary add-data" id="add-data" type="button"><span data-icon="plus"></span>Thêm bảng dữ liệu</button>
+  <div class="sidebar-heading"><h2>Dữ liệu của bạn</h2><span id="dataset-count">0</span></div>
+  <div class="search-field"><span data-icon="search"></span><label class="sr-only" for="dataset-search">Tìm bảng dữ liệu</label><input id="dataset-search" type="search" placeholder="Tìm bảng dữ liệu…" autocomplete="off"><kbd aria-hidden="true">Ctrl K</kbd></div>
+  <nav id="datasets" aria-label="Chọn bộ dữ liệu"></nav>
+  <div class="sidebar-bottom"><p class="storage-note"><span data-icon="shield"></span><span>Danh sách bảng và lịch sử lưu trong phiên tab trình duyệt này. File đã tải vẫn được lưu ở máy chủ.</span></p><div class="sidebar-tools"><button id="help" class="text-button" type="button"><span data-icon="help"></span>Hướng dẫn</button><button id="theme-toggle" class="icon-button" type="button" aria-label="Đổi giao diện" title="Đổi giao diện"></button></div></div>
+</aside>
+<button class="sidebar-backdrop" id="sidebar-backdrop" type="button" aria-label="Đóng danh sách dữ liệu" tabindex="-1" hidden></button>
+<main id="main">
+  <header class="workspace-header">
+    <button id="open-sidebar" class="icon-button mobile-only" type="button" aria-label="Mở danh sách dữ liệu" aria-expanded="false" aria-controls="sidebar" data-icon="panel"></button>
+    <div class="heading-text"><h1 id="title">Hỏi từ dữ liệu của bạn</h1><p id="subtitle">Một nơi để tra cứu và đối chiếu nguồn.</p></div>
+    <div class="header-actions">
+      <button id="view-profile" class="secondary" type="button" disabled aria-label="Cấu trúc dữ liệu" title="Cấu trúc dữ liệu"><span data-icon="columns"></span><span>Cấu trúc dữ liệu</span></button>
+      <button id="new-chat" class="icon-button" type="button" disabled aria-label="Cuộc trò chuyện mới" title="Cuộc trò chuyện mới" data-icon="plus"></button>
+      <button id="conversation-menu-button" class="icon-button" type="button" disabled aria-label="Tùy chọn cuộc trò chuyện" aria-expanded="false" aria-controls="conversation-menu" data-icon="dots"></button>
+      <div id="conversation-menu" class="action-menu" hidden><button id="export-chat" type="button"><span data-icon="download"></span>Tải hội thoại (.md)</button><button id="rename-data" type="button"><span data-icon="edit"></span>Đổi tên hiển thị</button></div>
+    </div>
+  </header>
+  <div class="notice-slot"><div id="notice" role="status" aria-live="polite" hidden></div></div>
+  <section id="messages" aria-label="Nội dung hội thoại"></section>
+  <div class="composer-area"><form id="question-form">
+    <label for="question">Câu hỏi của bạn</label><div class="composer">
+      <textarea id="question" rows="2" maxlength="6000" placeholder="Bạn muốn tìm hiểu điều gì trong bảng?" required disabled aria-describedby="context-hint composer-shortcut"></textarea>
+      <div class="composer-bottom"><span id="composer-shortcut">Enter để gửi <span class="shortcut-divider">/</span> Shift + Enter xuống dòng</span><span id="character-count" hidden></span><button class="primary send-button" id="send" disabled aria-label="Gửi câu hỏi" title="Gửi câu hỏi" data-icon="arrow"></button></div>
+    </div><p class="hint" id="context-hint">Tối đa 8 intent mỗi tin nhắn. Có thể hỏi tiếp về 2 bản ghi gần nhất.</p>
+  </form></div>
+</main>
+</div>
+<dialog id="upload-panel" class="modal upload-modal" aria-labelledby="upload-heading">
+  <div class="dialog-header"><div><h2 id="upload-heading">Thêm bảng dữ liệu</h2><p>Tải bảng lên để bắt đầu hỏi đáp.</p></div><button type="button" class="icon-button" data-close-dialog aria-label="Đóng cửa sổ tải dữ liệu" data-icon="close"></button></div>
+  <form id="upload-form">
+    <label for="file">File CSV hoặc Excel</label><div id="drop-zone" class="drop-zone"><span class="upload-symbol" data-icon="upload"></span><strong id="file-label">Kéo thả bảng dữ liệu vào đây</strong><span id="file-description">hoặc bấm để chọn file</span><span class="file-types">CSV, XLSX · Tối đa 20 MB</span><input id="file" type="file" accept=".csv,.xlsx" required aria-describedby="file-requirements"></div>
+    <p id="file-requirements" class="hint">Một bảng có tên cột ở dòng đầu. Tối đa 32 cột và 100.000 ô.</p>
+    <details id="upload-options" class="advanced-options"><summary>Tùy chọn nhập dữ liệu <span>Không bắt buộc</span></summary>
+      <div class="form-field"><label for="sheet">Tên sheet <span class="hint">(nếu có nhiều sheet)</span></label><input id="sheet" type="text" maxlength="100" autocomplete="off" placeholder="Ví dụ: Sheet1"><p class="hint">Để trống nếu file chỉ có một sheet.</p></div>
+      <div class="form-field"><label for="missing">Ký hiệu ô thiếu <span class="hint">(tùy chọn)</span></label><input id="missing" type="text" placeholder="Ví dụ: NA, ?" maxlength="256"><p class="hint">Phân cách bằng dấu phẩy. Chỉ khai báo nếu các ký hiệu này thật sự là giá trị thiếu.</p></div>
+    </details>
+    <div id="upload-error" class="inline-error" role="alert" hidden></div>
+    <div id="upload-progress" class="upload-progress" role="status" hidden><div class="loading-line"></div><strong>Đang tải và phân tích bảng…</strong><p>Hệ thống đang chuẩn bị dữ liệu. Vui lòng giữ cửa sổ này mở.</p></div>
+    <div class="dialog-footer"><button type="button" class="secondary" data-close-dialog>Để sau</button><button type="submit" class="primary" id="upload-submit"><span data-icon="upload"></span>Tải lên và phân tích</button></div>
+  </form>
+</dialog>
+<dialog id="profile" class="modal data-drawer" aria-labelledby="profile-heading">
+  <div class="dialog-header"><div><h2 id="profile-heading">Cấu trúc và lưu ý dữ liệu</h2><p id="profile-subtitle"></p></div><button type="button" class="icon-button" data-close-dialog aria-label="Đóng cấu trúc dữ liệu" data-icon="close"></button></div><div id="profile-content"></div>
+</dialog>
+<dialog id="help-dialog" class="modal" aria-labelledby="help-heading">
+  <div class="dialog-header"><div><h2 id="help-heading">Hỏi dữ liệu, bắt đầu từ đâu?</h2><p>Chọn bảng, đặt câu hỏi và mở nguồn để đối chiếu.</p></div><button type="button" class="icon-button" data-close-dialog aria-label="Đóng hướng dẫn" data-icon="close"></button></div>
+  <div class="help-content">
+    <h3>Hỏi rõ đối tượng và thông tin cần biết</h3><p>Ví dụ: “Cho tên xe và mpg của những xe có cylinders = 4.” Dùng tên cột trong bảng giúp hệ thống hiểu đúng hơn.</p>
+    <h3>Gộp nhiều yêu cầu, rồi hỏi tiếp</h3><p>Một tin nhắn hỗ trợ tối đa 8 intent. Bạn có thể hỏi tiếp về 2 bản ghi gần nhất đã xác định.</p>
+    <h3>Kiểm tra câu trả lời với nguồn</h3><p>Mở “Đối chiếu nguồn” bên dưới từng kết quả. Khi thông tin thiếu hoặc điều kiện chưa rõ, hệ thống sẽ báo lại.</p>
+    <h3>Giữ lại kết quả cần dùng</h3><p>Sao chép câu trả lời, tải bảng kết quả CSV hoặc tải hội thoại Markdown trong menu phía trên.</p>
+    <div class="help-note"><strong>Về lịch sử của bạn</strong><p>Danh sách bảng và lịch sử nằm trong phiên tab này, không đồng bộ sang máy khác. Đóng tab có thể làm mất thông tin hiển thị; file đã tải vẫn còn trên máy chủ.</p></div>
+    <p class="keyboard-help"><kbd>Enter</kbd> Gửi câu hỏi <kbd>Shift Enter</kbd> Xuống dòng <kbd>Ctrl K</kbd> Tìm bảng</p>
+  </div>
+</dialog>
+<dialog id="confirm-dialog" class="modal compact-modal" aria-labelledby="confirm-heading">
+  <div class="dialog-header"><h2 id="confirm-heading">Bắt đầu cuộc trò chuyện mới?</h2><button type="button" class="icon-button" data-close-dialog aria-label="Đóng xác nhận" data-icon="close"></button></div><p>Ngữ cảnh và lịch sử hiển thị hiện tại sẽ được đặt lại. Bạn có thể tải hội thoại trước khi bắt đầu mới.</p><div class="dialog-footer"><button class="secondary" type="button" data-close-dialog>Quay lại</button><button class="primary" id="confirm-new-chat" type="button">Bắt đầu mới</button></div>
+</dialog>
+<dialog id="rename-dialog" class="modal compact-modal" aria-labelledby="rename-heading">
+  <div class="dialog-header"><h2 id="rename-heading">Đổi tên hiển thị</h2><button type="button" class="icon-button" data-close-dialog aria-label="Đóng đổi tên" data-icon="close"></button></div>
+  <form id="rename-form"><label for="dataset-name">Tên bảng trong danh sách</label><input id="dataset-name" maxlength="120" required><p class="hint">Chỉ đổi tên trong tab này. File nguồn không thay đổi.</p><div class="dialog-footer"><button type="button" class="secondary" data-close-dialog>Hủy</button><button type="submit" class="primary">Lưu tên</button></div></form>
+</dialog>
+<noscript><p class="inline-error">Vui lòng bật JavaScript để tải dữ liệu và sử dụng hội thoại.</p></noscript>
+</body>
+</html>

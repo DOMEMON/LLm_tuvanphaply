@@ -2,9 +2,9 @@
 const path = require('node:path');
 const args = process.argv.slice(2);
 const option = (name, fallback) => args.includes(name) ? args[args.indexOf(name)+1] : fallback;
-const system = option('--system', 'g85');
-if (!['g8','g85'].includes(system)) throw new Error('Use --system g8 or g85');
-const folder = system === 'g8' ? 'G8-Source-code-LLM-tu-van-hanh-chinh-cong' : 'G8.5-He-thong-LLM-reusable';
+const system = option('--system', 'g8');
+if (system !== 'g8') throw new Error('This cookie-session smoke is for G8. For G8.5 use g85/tabular_lab/ui_redesign_smoke.cjs in its source folder.');
+const folder = 'G8-Source-code-LLM-tu-van-hanh-chinh-cong';
 const modulePath = process.env.PLAYWRIGHT_TEST_MODULE || path.resolve(__dirname, '..', folder, 'frontend/node_modules/@playwright/test');
 const {chromium, expect} = require(modulePath);
 const origin = option('--origin', `http://localhost:${system === 'g8' ? 13008 : 13085}`);

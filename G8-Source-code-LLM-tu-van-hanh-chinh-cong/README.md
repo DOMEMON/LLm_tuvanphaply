@@ -1,6 +1,10 @@
-# Source code LLM tư vấn hành chính công — G8
+# G8 — Hệ thống tư vấn pháp lý: Hỗ trợ tra cứu thủ tục hành chính
 
 Ứng dụng hỏi đáp nhiều ý/nhiều lượt theo corpus hành chính đã review. Backend giữ phiên/history/queue/ownership; LLM local lập plan; LangGraph kiểm tra và sửa có giới hạn; câu trả lời lấy evidence đúng thủ tục/trường. React UI có chat, history, sources, feedback và checklist.
+
+![Kiến trúc hệ thống G8](../assets/g8-system-architecture.png)
+
+Bản cập nhật giữ lõi tra cứu/corpus 36 thủ tục và đồng bộ giao diện đang dùng: bố cục chat/lịch sử mới, tìm kiếm hội thoại, sáng/tối và nguồn tham chiếu. Cấu hình chạy độc lập bên dưới được giữ riêng, không sao chép URL, database hay lịch sử của máy tác giả.
 
 ## Source và dữ liệu
 
@@ -60,7 +64,7 @@ uv run pytest -q
 
 **179 test offline** kiểm tra graph/contract/guard/catalog/hội thoại với corpus đi kèm, gồm giới hạn 8 task, migration state cũ về 2 thủ tục, bộ lọc ngược và binding evidence riêng từng ý. Test chạy trực tiếp trên source trong thư mục này; không cần snapshot riêng của tác giả, GPU hoặc MCP live. `source-service/` cũng có test, chạy `uv sync --frozen` và `uv run pytest -q` tại thư mục đó. Test offline dùng plan/model giả lập để kiểm tra contract và executor, không phải accuracy benchmark của LLM thật.
 
-Trong `frontend/` (46 test bao gồm visitor và account compatibility):
+Trong `frontend/` (54 test bao gồm visitor, account compatibility và trình bày bằng chứng):
 
 ```powershell
 npm ci

@@ -1,15 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { MessageBoundary } from './components/MessageBoundary'
+// ui-refresh-20261008: shared presentation, unchanged chat/session logic
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import * as Dropdown from '@radix-ui/react-dropdown-menu'
 import { ArrowUp, ArrowUpRight, Buildings, CaretUpDown, Check, DotsThree, HouseLine, MagnifyingGlass, Moon, NotePencil, PencilSimple, PushPin, SealCheck, SidebarSimple, SignOut, Sun, Trash, UserPlus, X, ArrowCounterClockwise, LockKey, ChatsCircle, Monitor } from '@phosphor-icons/react'
 import { AuthDialog } from './components/AuthDialog'
 import { Modal } from './components/Modal'
-import { MessageView } from './components/MessageView'
+const MessageView = lazy(() => import('./components/MessageView').then(module => ({ default: module.MessageView })))
 import { PreparationPanel } from './components/PreparationPanel'
 import * as api from './services/api'
 import { restoreBrowserSession, restoredConversation } from './services/browserSession'
 import type { Conversation, Message, MessageFeedback, User } from './types/api'
 import './App.css'
-export { FeedbackPanel } from './components/MessageView'
 
 type Theme = 'system' | 'light' | 'dark'
 type Attempt = { conversationId: string; content: string; clientMessageId: string }
@@ -26,6 +27,7 @@ const historyStorage = visitorMode ? localStorage : sessionStorage
 const order = (items: Conversation[]) => [...items].sort((a, b) => Number(Boolean(b.is_pinned)) - Number(Boolean(a.is_pinned)) || b.updated_at.localeCompare(a.updated_at))
 
 function App() {
+  useEffect(() => { document.title = 'Hệ thống tư vấn dịch vụ Hành chính công' }, [])
   const [user, setUser] = useState<User | null>(null)
   const [accounts, setAccounts] = useState<User[]>([])
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -301,9 +303,9 @@ function App() {
   }
 
   const composerBox = <form className={'composer ' + (empty ? 'composer-home' : '')} onSubmit={(event) => { event.preventDefault(); void send() }}>
-    <textarea ref={composer} aria-label="Câu hỏi của bạn" placeholder={empty ? 'Bạn cần hỗ trợ thủ tục gì?' : 'Hỏi thêm về thủ tục…'} value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={4000} rows={2} disabled={loading || sending || loadingHistory} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send() } }} />
-    <div className="composer-toolbar"><span><SealCheck size={15} /> Trả lời có nguồn tham chiếu</span><button type="submit" className="send-button" aria-label="Gửi câu hỏi" title="Gửi câu hỏi" disabled={!draft.trim() || loading || sending || loadingHistory}><ArrowUp size={22} weight="bold" /></button></div>
-  </form>
+    <textarea ref={composer} aria-label="Câu hỏi của bạn" aria-describedby="composer-help" placeholder={empty ? 'Bạn cần hỗ trợ thủ tục gì?' : 'Hỏi thêm về thủ tục…'} value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={4000} rows={2} disabled={loading || sending || loadingHistory} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send() } }} />
+    <div className="composer-toolbar"><span><NotePencil size={16} /> Hỏi một hoặc nhiều nội dung</span><button type="submit" className="send-button" aria-label="Gửi câu hỏi" title="Gửi câu hỏi" disabled={!draft.trim() || loading || sending || loadingHistory}><ArrowUp size={22} weight="bold" /></button></div>
+  <p id="composer-help" className="composer-help">Enter để gửi · Shift + Enter để xuống dòng</p></form>
 
   return <div className={'app-shell ' + (sidebarOpen ? 'sidebar-is-open' : '')}>
     {sidebarOpen && <button className="sidebar-scrim" aria-label="Đóng danh sách hội thoại" onClick={() => setSidebarOpen(false)} />}
@@ -318,7 +320,7 @@ function App() {
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
       }
     }}>
-      <div className="sidebar-brand"><button className="brand" onClick={newConversation} disabled={sending}><span className="brand-mark"><SealCheck size={24} weight="fill" /></span><span>Hành chính<span className="brand-caption">G8 · Đa yêu cầu</span></span></button><button className="icon-button mobile-close" aria-label="Đóng menu" onClick={() => setSidebarOpen(false)}><X size={20} /></button></div>
+      <div className="sidebar-brand"><button className="brand" onClick={newConversation} disabled={sending}><span className="brand-mark"><SealCheck size={24} weight="fill" /></span><span>Hệ thống tư vấn dịch vụ Hành chính công<span className="brand-caption">Tra cứu theo tài liệu</span></span></button><button className="icon-button mobile-close" aria-label="Đóng menu" onClick={() => setSidebarOpen(false)}><X size={20} /></button></div>
       <button className="new-chat" onClick={newConversation} disabled={sending}><NotePencil size={19} />Cuộc trò chuyện mới<span className="key-hint">+</span></button>
       <button className="new-chat" disabled={!user || loading} onClick={() => { setSidebarOpen(false); setPreparation({}) }}><SealCheck size={19} />Hồ sơ đang chuẩn bị</button>
       <label className="search-box"><MagnifyingGlass size={17} /><input aria-label="Tìm cuộc trò chuyện" placeholder="Tìm cuộc trò chuyện" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
@@ -346,11 +348,13 @@ function App() {
       </div>
     </aside>
     <main className="workspace" inert={mobile && sidebarOpen}>
-      <header className="chat-header"><div className="header-leading"><button className="icon-button sidebar-toggle" aria-label="Mở danh sách hội thoại" onClick={() => setSidebarOpen(true)}><SidebarSimple size={22} /></button><span className="header-title">{active?.title ?? 'Không gian hỏi đáp'}</span></div><div className="header-actions"><span className="local-badge"><SealCheck size={15} />Thông tin có căn cứ</span>{!visitorMode && (!user || user.is_guest) && <button className="secondary-button" onClick={() => setAuthMode('login')} disabled={sending}>Đăng nhập</button>}</div></header>
+      <header className="chat-header"><div className="header-leading"><button className="icon-button sidebar-toggle" aria-label="Mở danh sách hội thoại" onClick={() => setSidebarOpen(true)}><SidebarSimple size={22} /></button><span className="header-title">{active?.title ?? 'Không gian hỏi đáp'}</span></div><div className="header-actions"><span className="local-badge"><NotePencil size={16} />Đối chiếu theo tài liệu</span>{!visitorMode && (!user || user.is_guest) && <button className="secondary-button" onClick={() => setAuthMode('login')} disabled={sending}>Đăng nhập</button>}</div></header>
       {error && <div className="error-banner" role="alert"><span>{error}</span>{retry && !sending && <button className="text-button" onClick={() => void send(retry)}><ArrowCounterClockwise size={16} />Thử lại</button>}<button className="icon-button" aria-label="Đóng thông báo" onClick={() => setError('')}><X size={17} /></button></div>}
-      {empty ? <div className="welcome-scroll"><section className="welcome"><div className="welcome-mark"><SealCheck size={36} weight="fill" /></div><p className="welcome-greeting">{greeting}</p><h1>Thủ tục nào bạn đang cần?</h1><p className="welcome-description">Từ giấy tờ cần chuẩn bị đến nơi nộp hồ sơ.<br />Cứ hỏi theo cách của bạn.</p>{composerBox}<div className="suggestions"><span>Bắt đầu với</span>{SUGGESTIONS.map(({ icon: Icon, title, prompt }) => <button key={title} onClick={() => { setDraft(prompt); composer.current?.focus() }} disabled={loading || sending}><Icon size={17} />{title}<ArrowUpRight size={14} /></button>)}</div><p className="welcome-footnote">Bạn có thể hỏi tiếp hoặc đổi thủ tục bất cứ lúc nào.</p></section><div className="welcome-bottom"><span>Hỏi đơn giản. Hiểu rõ thủ tục.</span><span>Dữ liệu nội bộ đã duyệt cho demo</span></div></div>
+      {empty ? <div className="welcome-scroll"><section className="welcome"><div className="welcome-mark"><SealCheck size={36} weight="fill" /></div><p className="welcome-greeting">{greeting}</p><h1>Hệ thống tư vấn dịch vụ Hành chính công</h1><p className="welcome-description">Từ giấy tờ cần chuẩn bị đến nơi nộp hồ sơ.<br />Cứ hỏi theo cách của bạn.</p>{composerBox}<div className="suggestions"><span>Bắt đầu với</span>{SUGGESTIONS.map(({ icon: Icon, title, prompt }) => <button key={title} onClick={() => { setDraft(prompt); composer.current?.focus() }} disabled={loading || sending}><Icon size={17} />{title}<ArrowUpRight size={14} /></button>)}</div><p className="welcome-footnote">Bạn có thể hỏi tiếp hoặc đổi thủ tục bất cứ lúc nào.</p></section><div className="welcome-bottom"><span>Hỏi đơn giản. Hiểu rõ thủ tục.</span><span>Dữ liệu nội bộ đã duyệt cho demo</span></div></div>
         : <><div className="message-scroll" ref={scrollArea} onScroll={() => { const el = scrollArea.current; if (el) nearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 160 }}><div className="message-column">
+          <MessageBoundary><Suspense fallback={<p className="thinking" role="status">Đang hiển thị hội thoại…</p>}>
           {loadingHistory ? <div className="history-skeleton" role="status" aria-label="Đang tải hội thoại"><span /><span /><span /></div> : messages.map((message) => <MessageView key={message.id} message={message} feedback={feedback[message.id]} onChecklist={(messageId, procedureId) => setPreparation({ messageId, procedureId })} onFeedback={(value) => setFeedback((current) => { const next = { ...current }; if (value) next[message.id] = value; else delete next[message.id]; return next })} onError={reportError} />)}
+          </Suspense></MessageBoundary>
           {sending && <div className="thinking" role="status"><span className="thinking-mark"><SealCheck size={20} /></span><span>{partial || status}</span></div>}<div ref={scrollBottom} />
         </div></div><div className="composer-dock">{composerBox}<p className="composer-note">Thông tin hỗ trợ tham khảo. Bạn có thể yêu cầu kiểm tra trên Cổng DVC Quốc gia.</p></div></>}
     </main>

@@ -18,13 +18,13 @@ for rel in filter(None, paths):
     data = path.read_bytes()
     total += len(data)
     parts = Path(rel).parts
-    if set(parts) & {'.runtime', '.venv', 'node_modules', '__pycache__', 'dist', 'private', 'external'}:
+    if set(parts) & {'.runtime', '.venv', 'node_modules', '__pycache__', 'dist', 'private', 'external', 'docs', 'report', 'reports'}:
         errors.append((rel, 'runtime/private/generated directory'))
     if path.name.startswith('.env') and path.name != '.env.example':
         errors.append((rel, 'non-example environment file'))
     if path.suffix.lower() == '.md' and rel not in allowed_md:
         errors.append((rel, 'only distribution READMEs may be published'))
-    if path.suffix.lower() in {'.gguf', '.safetensors', '.dump', '.sql', '.db', '.log'}:
+    if path.suffix.lower() in {'.gguf', '.safetensors', '.dump', '.sql', '.db', '.log', '.sqlite', '.sqlite3', '.pem', '.key', '.pdf', '.xlsx'}:
         errors.append((rel, 'weights, history or log artifact'))
     if len(data) > 20_000_000:
         errors.append((rel, 'unexpectedly large file'))
@@ -36,7 +36,20 @@ for rel in filter(None, paths):
     if re.search(r'\b[D-Z]:[\\/]CODEFPT\b', text, re.I):
         errors.append((rel, 'author-machine absolute path'))
     if 'G8.5-' in rel and path.name in {'administrative_policy.py', 'legacy_administrative_bridge.py',
-                                       'g85-profile.json', 'g85-metadata.json'}:
+                                       'g85-profile.json', 'g85-metadata.json', 'model_server.py'}:
         errors.append((rel, 'domain-specific serving artifact'))
+    if path.suffix.lower() == '.md':
+        for label, destination in re.findall(r'!?\[([^\]]*)\]\(([^)]+)\)', text):
+            destination = destination.split('#', 1)[0]
+            if destination and not re.match(r'^[a-zA-Z]+:', destination) and not (path.parent / destination).exists():
+                errors.append((rel, 'broken local Markdown link: ' + destination))
+root_readme = (ROOT / 'README.md').read_text(encoding='utf-8')
+for image in ('assets/g8-system-architecture.png', 'assets/g85-auto-package-pipeline.png'):
+    if image not in root_readme or not (ROOT / image).is_file():
+        errors.append((image, 'current architecture figure missing from README'))
+    elif not (ROOT / image).read_bytes().startswith(b'\x89PNG\r\n\x1a\n'):
+        errors.append((image, 'invalid PNG figure'))
+if 'assets/g85-pipeline.jpg' in paths or 'assets/g85-pipeline.jpg' in root_readme:
+    errors.append(('assets/g85-pipeline.jpg', 'obsolete architecture figure'))
 print(json.dumps({'tracked_files': count, 'bytes': total, 'errors': errors, 'pass': not errors}))
 raise SystemExit(bool(errors))

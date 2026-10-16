@@ -1,7 +1,7 @@
+import { AnswerContent } from './AnswerContent'
+import { SourceDetails } from './SourceDetails'
 import { useState } from 'react'
-import { Check, CheckCircle, Copy, CaretDown, ChatCircleDots, ArrowSquareOut, SealCheck } from '@phosphor-icons/react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import { Check, CheckCircle, Copy, ChatCircleDots } from '@phosphor-icons/react'
 import { deleteMessageFeedback, putMessageFeedback } from '../services/api'
 import type { FeedbackRelevance, FeedbackSatisfaction, Grounding, Message, MessageFeedback } from '../types/api'
 
@@ -12,32 +12,8 @@ const FIELDS: Record<string, string> = {
   submission_methods: 'Hình thức nộp',
 }
 const PAUSED_FIELDS = new Set(['steps', 'legal_bases', 'applicant_scope'])
-function safeLink(value: string | null | undefined) {
-  if (!value) return undefined
-  try { const url = new URL(value); return ['https:', 'http:'].includes(url.protocol) ? url.href : undefined }
-  catch { return undefined }
-}
-export function GroundingPanel({ grounding }: { grounding: Grounding }) {
-  const checklist = grounding.checklist?.filter((item) => !PAUSED_FIELDS.has(item.field))
-  const missing = grounding.missing_information.filter((field) => !PAUSED_FIELDS.has(field))
-  const label = grounding.status === 'ANSWER' ? 'Nguồn tham chiếu' : grounding.status === 'NEED_CLARIFICATION' ? 'Cần làm rõ' : 'Chưa đủ dữ liệu'
-  const titles = [...new Set(grounding.sources.map((source) => source.title))]
-  if (!titles.length && grounding.procedure_title) titles.push(grounding.procedure_title)
-  return <details className={`grounding grounding-${grounding.status.toLowerCase()}`}>
-    <summary><SealCheck size={17} /><span>{label}</span>{grounding.sources.length > 0 && <span className="source-count">{grounding.sources.length}</span>}<CaretDown size={14} /></summary>
-    <div className="source-content">
-      {titles.map((title) => <p className="source-note" key={title}>Nguồn: <strong>{title}</strong></p>)}
-      <details className="technical-details"><summary>Chi tiết đối chiếu</summary>
-        {grounding.data_classification === 'D0_SYSTEM_SMOKE' && <p>Dữ liệu mô phỏng, không phải hướng dẫn thực tế.</p>}
-        {checklist?.length ? <dl className="answer-checklist">{checklist.map((item) => <div key={item.field}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}</dl> : null}
-        {missing.length > 0 && <p>Cần bổ sung: {missing.map((field) => FIELDS[field] ?? field).join(', ')}.</p>}
-        {grounding.sources.filter((source, index, sources) => safeLink(source.url) && sources.findIndex((item) => item.url === source.url) === index).map((source) => <p key={source.source_id}><a href={safeLink(source.url)} target="_blank" rel="noreferrer noopener">{source.title}<ArrowSquareOut size={14} /></a></p>)}
-        <p>Phiên bản nguồn: <code>{grounding.knowledge_version ?? grounding.corpus_version}</code></p>
-        {grounding.verification && <p>{grounding.verification.fallback_used ? 'Hệ thống dùng nội dung trích xuất từ nguồn thay cho bản diễn đạt của model.' : 'Nội dung đã qua bước đối chiếu với nguồn.'}</p>}
-        {grounding.sources.map((source) => <code className="fragment-id" key={source.fragment_id}>{source.fragment_id}</code>)}
-      </details>
-    </div>
-  </details>
+export function GroundingPanel({ grounding, resultStatus }: { grounding: Grounding; resultStatus?: string }) {
+  return <SourceDetails grounding={grounding} fieldLabels={FIELDS} pausedFields={PAUSED_FIELDS} resultStatus={resultStatus} />
 }
 export function FeedbackPanel({ messageId, initial, onChange, onError }: {
   messageId: string; initial?: MessageFeedback; onChange: (feedback: MessageFeedback | null) => void; onError: (error: unknown) => void
@@ -86,13 +62,8 @@ export function MessageView({ message, feedback, onFeedback, onError, onChecklis
     catch { onError(new Error('Không sao chép được. Bạn có thể chọn và sao chép nội dung trực tiếp.')) }
   }
   return <article className="message assistant" aria-label="Câu trả lời của trợ lý">
-    <div className="assistant-identity"><span className="assistant-mark"><SealCheck size={18} weight="fill" /></span><span>Trợ lý hành chính</span></div>
-    <div className="answer-markdown"><ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={(url) => safeLink(url) ?? ''} components={{ img: ({ alt }) => <span>{alt}</span>, a: ({ href, children }) => <a href={safeLink(href)} target="_blank" rel="noreferrer noopener">{children}<ArrowSquareOut size={13} /></a> }}>{message.content}</ReactMarkdown></div>
-    {message.grounding?.parts?.length ? message.grounding.parts.map((part) => <section key={part.task_id} aria-label={part.title}>
-      <p className="source-note">Đối chiếu: <strong>{part.title}</strong></p>
-      <GroundingPanel grounding={part.grounding} />
-      {onChecklist && part.procedure_id && part.grounding.checklist?.some((item) => item.field === "required_documents") && <button className="text-button checklist-create" onClick={() => onChecklist(message.id, part.procedure_id!)}>Lưu checklist: {part.title}</button>}
-    </section>) : message.grounding && <GroundingPanel grounding={message.grounding} />}
+    <div className="assistant-identity"><span className="assistant-mark"><ChatCircleDots size={20} /></span><span>Trợ lý hành chính</span></div>
+    <AnswerContent message={message} onChecklist={onChecklist} renderGrounding={(grounding, resultStatus) => <GroundingPanel grounding={grounding} resultStatus={resultStatus} />} />
     {onChecklist && !message.grounding?.parts?.length && message.grounding?.status === 'ANSWER' && message.grounding.checklist?.some((item) => item.field === 'required_documents') && <button className="text-button checklist-create" onClick={() => onChecklist(message.id)}>Lưu checklist hồ sơ</button>}
     <div className="answer-actions"><button className="icon-button" aria-label={copied ? 'Đã sao chép' : 'Sao chép câu trả lời'} title={copied ? 'Đã sao chép' : 'Sao chép'} onClick={() => void copy()}>{copied ? <Check size={17} /> : <Copy size={17} />}</button><details className="feedback-disclosure"><summary><ChatCircleDots size={17} />{feedback ? 'Đã phản hồi' : 'Góp ý câu trả lời'}</summary><FeedbackPanel messageId={message.id} initial={feedback} onChange={onFeedback} onError={onError} /></details></div>
   </article>

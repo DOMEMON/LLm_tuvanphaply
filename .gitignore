@@ -2,6 +2,7 @@
 .env.*
 !.env.example
 .venv/
+*.egg-info/
 node_modules/
 dist/
 __pycache__/
@@ -21,6 +22,11 @@ test-results/
 *.sql
 *.dump
 *.db
+*.sqlite
+*.sqlite3
+*.pem
+*.key
+uploads/
 **/data/packages/
 **/data/private/
 **/data/external/
