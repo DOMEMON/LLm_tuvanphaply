@@ -7,7 +7,9 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 paths = subprocess.check_output(['git', 'ls-files', '-z'], cwd=ROOT).decode().split('\0')
 allowed_md = {'README.md', 'G8-Source-code-LLM-tu-van-hanh-chinh-cong/README.md',
-              'G8.5-He-thong-LLM-reusable/README.md'}
+              'G8.5-He-thong-LLM-reusable/README.md', 'report/README.md'}
+public_reports = {'report/README.md', 'report/RP1_he-thong-tu-van-phap-ly.pdf',
+                  'report/RP2_he-thong-tu-dong-tao-package.pdf'}
 token_patterns = [r'gh[pousr]_[A-Za-z0-9]{30,}', r'github_pat_[A-Za-z0-9_]{40,}',
                   r'sk-(?:proj-)?[A-Za-z0-9_-]{30,}', r'tskey-[A-Za-z0-9_-]{20,}',
                   r'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----']
@@ -18,13 +20,15 @@ for rel in filter(None, paths):
     data = path.read_bytes()
     total += len(data)
     parts = Path(rel).parts
-    if set(parts) & {'.runtime', '.venv', 'node_modules', '__pycache__', 'dist', 'private', 'external', 'docs', 'report', 'reports'}:
+    if (set(parts) & {'.runtime', '.venv', 'node_modules', '__pycache__', 'dist', 'private', 'external', 'docs', 'report', 'reports'}
+            and rel not in public_reports):
         errors.append((rel, 'runtime/private/generated directory'))
     if path.name.startswith('.env') and path.name != '.env.example':
         errors.append((rel, 'non-example environment file'))
     if path.suffix.lower() == '.md' and rel not in allowed_md:
         errors.append((rel, 'only distribution READMEs may be published'))
-    if path.suffix.lower() in {'.gguf', '.safetensors', '.dump', '.sql', '.db', '.log', '.sqlite', '.sqlite3', '.pem', '.key', '.pdf', '.xlsx'}:
+    if (path.suffix.lower() in {'.gguf', '.safetensors', '.dump', '.sql', '.db', '.log', '.sqlite', '.sqlite3', '.pem', '.key', '.pdf', '.xlsx'}
+            and rel not in public_reports):
         errors.append((rel, 'weights, history or log artifact'))
     if len(data) > 20_000_000:
         errors.append((rel, 'unexpectedly large file'))

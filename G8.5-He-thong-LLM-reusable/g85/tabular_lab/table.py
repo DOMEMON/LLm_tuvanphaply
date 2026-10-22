@@ -159,8 +159,17 @@ class Table:
         self.db.execute('CREATE TABLE data (' + declarations + ')')
         self.db.execute('BEGIN TRANSACTION')
         try:
-            self.db.executemany('INSERT INTO data VALUES (' + ','.join('?' for _ in self.types) + ')',
-                                [list(row.values()) for row in self.rows])
+            # Bind one JSON document per bounded batch. In minimal Python
+            # environments DuckDB's per-value binding repeatedly probes absent
+            # optional dataframe modules. Bulk insertion avoids that cost while
+            # preserving explicit types, NULLs, row indices and source ordering.
+            projections = ', '.join(
+                f"CAST(json_extract_string(value, '$[{i}]') AS {kind})"
+                for i, kind in enumerate(self.types.values()))
+            sql = 'INSERT INTO data SELECT ' + projections + ' FROM json_each(?) ORDER BY CAST(key AS BIGINT)'
+            for offset in range(0, len(self.rows), 256):
+                batch = [list(row.values()) for row in self.rows[offset:offset + 256]]
+                self.db.execute(sql, [json.dumps(batch, ensure_ascii=False, allow_nan=False)])
             self.db.execute('COMMIT')
         except Exception:
             self.db.execute('ROLLBACK')

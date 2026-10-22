@@ -121,6 +121,16 @@ def fold(text):
                    if unicodedata.category(c) != 'Mn').replace('đ', 'd')
 
 
+FIELD_PATTERNS = {
+    'required_documents': r'ho so|giay to|mang giay|bo sung giay|can giay|chuan bi giay',
+    'processing_times': r'bao lau|may ngay|thoi gian|thoi han',
+    'receiving_authority': r'nop o dau|noi nop|dia diem nop|cho nao nhan',
+    'submission_methods': r'hinh thuc|phuong thuc nop|cach nop|kenh nop|online|truc tuyen',
+    'fees': r'le phi|\bphi\b|bao nhieu tien|mat tien|ton tien|voi tien|tien thoi',
+    'applicant_scope': r'dieu kien|doi tuong',
+}
+
+
 def requested_fields(text):
     """Positive question clauses only; this is a check, not an intent router."""
     q = fold(text)
@@ -130,18 +140,17 @@ def requested_fields(text):
     positive = ' '.join(c for c in clauses if not re.search(
         r'\bdung\b|chua hoi|khong hoi|khong can|chua can|khoi noi|da co|co roi', c))
     positive = re.sub(r'((?:nop o dau|noi nop|dia diem nop|cho nao nhan)\s+)ho so', r'\1', positive)
-    patterns = {
-        'required_documents': r'ho so|giay to|mang giay|bo sung giay|can giay|chuan bi giay',
-        'processing_times': r'bao lau|may ngay|thoi gian|thoi han',
-        'receiving_authority': r'nop o dau|noi nop|dia diem nop|cho nao nhan',
-        'submission_methods': r'hinh thuc|cach nop|kenh nop|online|truc tuyen',
-        'fees': r'le phi|\bphi\b|bao nhieu tien|mat tien|ton tien|voi tien|tien thoi',
-        'applicant_scope': r'dieu kien|doi tuong',
-    }
-    return [field for field, pattern in patterns.items() if re.search(pattern, positive)]
+    # "Hồ sơ" is the object being submitted, not a second request for its
+    # contents. Preserve a separate "hồ sơ gồm/cần ..." clause, if present.
+    positive = re.sub(r'((?:hinh thuc|phuong thuc|cach|kenh)\s+nop\s+)ho so', r'\1', positive)
+    return [field for field, pattern in FIELD_PATTERNS.items() if re.search(pattern, positive)]
 
 
 def check_turn(plan, query, catalog, state):
+    if plan.overflow:
+        return plan
+    from app.rag.g8.request_contract import enforce
+    plan = enforce(plan, query, state, catalog)
     if plan.overflow:
         return plan
     plan = review_categories(plan, query, catalog, state)

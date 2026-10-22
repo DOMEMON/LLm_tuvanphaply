@@ -401,6 +401,10 @@ async def understand(query, state, catalog, history, client, request_id):
     from app.rag.g8.mentor_context import recent_pair, exceeds_limit
     if exceeds_limit(query, catalog):
         return Plan(relation='replace', tasks=[Task(kind='clarify', quote=query, question='G8_TASK_LIMIT')], overflow=True)
+    from app.rag.g8.request_contract import preflight as request_preflight
+    request_boundary = request_preflight(query, state, catalog)
+    if request_boundary is not None:
+        return request_boundary
     from app.rag.g8.mentor_context import forgotten_ordinal
     selected_menu = recent_pair(query, state) or forgotten_ordinal(query, state) or menu_selection(query, state) or explicit_catalog(query, state, catalog)
     if selected_menu is not None:

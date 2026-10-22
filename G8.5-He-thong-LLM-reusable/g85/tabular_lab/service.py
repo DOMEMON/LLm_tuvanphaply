@@ -240,6 +240,8 @@ def create_app(root=None, model_factory=Model, query_engine=None):
         except KeyError:
             raise HTTPException(404, 'DATASET_NOT_FOUND')
         except ValueError as exc:
+            if str(exc) in ('MODEL_OUTPUT_TRUNCATED', 'OUTPUT_TRUNCATED'):
+                raise HTTPException(503, 'MODEL_PLAN_INCOMPLETE')
             status = 409 if str(exc) in ('DATASET_VERSION_MISMATCH', 'SOURCE_CHECKSUM_CHANGED', 'CONVERSATION_REVISION_MISMATCH') else 422
             raise HTTPException(status, str(exc))
         except Exception:
@@ -249,7 +251,7 @@ def create_app(root=None, model_factory=Model, query_engine=None):
     async def health():
         return {'status': 'ok', 'workers': 1, 'capacity_including_active': 8, 'pending': app.state.pending,
                 'query_engine': store.query_engine, 'semantic_text_filter_enabled': False,
-                'runtime_release': 'package-quality-20261014', 'lookup_review_enabled': False}
+                'runtime_release': 'package-contract-20261022', 'lookup_review_enabled': False}
 
     static = Path(__file__).parent / 'static'
     app.mount('/workspace', StaticFiles(directory=static), name='workspace')

@@ -97,10 +97,11 @@ def read_tabular_package(root, schema_path):
         frequencies = Counter(t for counts in terms.values() for t in counts)
 
         def select_catalog(query, state, limit=48):
-            if len(package.catalog) <= limit:
-                return package.catalog
             q = set(tokens(query))
             priority = list(dict.fromkeys(state.displayed_options[-2:] + state.focused[-2:]))
+            from .tabular_requests import explicit_rows
+            requested = [f'row_{i}' for i in explicit_rows(query) if f'row_{i}' in package.catalog]
+            priority = list(dict.fromkeys(requested + priority))
             ranked = sorted(terms, key=lambda key: (-sum(
                 math.log(1 + len(terms) / frequencies[t]) for t in q & terms[key].keys()), key))
             selected = list(dict.fromkeys([k for k in priority if k in terms] + ranked))[:limit]

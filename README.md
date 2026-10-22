@@ -7,6 +7,17 @@ Hai hướng triển khai cùng nguyên tắc: **LLM hiểu yêu cầu, chương
 | **G8 — Hệ thống tư vấn pháp lý: Hỗ trợ tra cứu thủ tục hành chính** | Tra cứu 36 thủ tục thuộc phường Tăng Nhơn Phú, Thành phố Hồ Chí Minh; multi-intent và hội thoại nhiều lượt | [G8](G8-Source-code-LLM-tu-van-hanh-chinh-cong/README.md) |
 | **G8.5 — Tự động tạo package từ dữ liệu dạng bảng cho hệ thống LLM** | Upload CSV/Excel → phân tích metadata → tạo package → hỏi đáp trên dataset được chọn | [G8.5](G8.5-He-thong-LLM-reusable/README.md) |
 
+## Báo cáo và bản cập nhật 22/10/2026
+
+Hai báo cáo IEEE nằm trong [thư mục report](report/README.md):
+
+- [RP1 — Hệ thống tư vấn pháp lý: Hỗ trợ tra cứu thủ tục hành chính](report/RP1_he-thong-tu-van-phap-ly.pdf).
+- [RP2 — Hệ thống tự động tạo package từ dữ liệu dạng bảng cho hệ thống LLM](report/RP2_he-thong-tu-dong-tao-package.pdf).
+
+Bản source mới bổ sung kiểm tra yêu cầu/đối tượng cho G8 và sửa ràng buộc câu hỏi bảng cho G8.5: đếm dòng, tra dòng chính xác, tách multi-intent, cùng trường cho nhiều bản ghi, tên hiển thị khác mã định danh và giá trị văn bản có dấu nháy/escape. Nạp bảng dùng các lô có tham số để giảm chi phí chèn từng giá trị, vẫn giữ kiểu và bằng chứng nguồn.
+
+Kiểm thử offline trên bản source công khai: **G8 223/223**, **G8.5 180/180**. Lượt hồi quy API G8.5 trên 11 dataset hoàn tất **221/221**, đạt đủ tiêu chí **218/221**, trong đó DEV **176/176**. Ba trường hợp còn lại là kết quả `partial` do ô thiếu hoặc giới hạn trả 1.000 dòng; các câu hỏi/gold và scorer được giữ nguyên. Chi tiết phạm vi nằm trong [README báo cáo](report/README.md). Các PDF giữ số liệu của phiên bản được đo khi viết bài.
+
 ## G8: tra cứu thủ tục hành chính
 
 ![Kiến trúc G8 — Hệ thống tư vấn dịch vụ Hành chính công](assets/g8-system-architecture.png)
@@ -54,6 +65,7 @@ UI có kéo thả file, tìm/chuyển bảng, xem cấu trúc, hội thoại m�
 │   ├── examples/devices.csv      # Dữ liệu giả lập của bản source
 │   └── compose.yaml
 ├── assets/                       # Hai hình kiến trúc hiện tại
+├── report/                       # Hai báo cáo IEEE dạng PDF
 └── tools/                        # Kiểm tra bản source công khai
 ```
 
@@ -124,4 +136,4 @@ Linux/macOS dùng `.venv/bin/python`. Test offline dùng dữ liệu tổng hợ
 - **G8** dùng cookie trình duyệt để khôi phục lịch sử ở server; tài khoản Google giống nhau trên hai máy không tự đồng bộ cookie. **G8.5** giữ danh sách bảng/token/lịch sử hiển thị trong `sessionStorage` của tab; file và context lưu riêng ở server. Chưa có đồng bộ tài khoản giữa thiết bị.
 - Compose mẫu chỉ bind localhost. G8.5 chưa có tenant/account auth đầy đủ, thu hồi token, quota đĩa hay chức năng xóa dữ liệu cho production. Public cần HTTPS, xác thực, rate limit, quản trị dữ liệu và sao lưu, không chỉ đổi host sang `0.0.0.0`.
 
-Không kèm báo cáo nội bộ, bộ benchmark riêng, dataset thử tải từ bên thứ ba, tài khoản, `.env` thật, tunnel state, logs hay weights. Các README là hướng dẫn source. Quyền sử dụng model, thư viện và dữ liệu bên thứ ba vẫn theo giấy phép tương ứng.
+Thư mục `report/` chứa hai PDF được công bố cùng source. Không kèm bộ benchmark riêng, dataset thử tải từ bên thứ ba, tài khoản, `.env` thật, tunnel state, logs hay weights. Quyền sử dụng model, thư viện và dữ liệu bên thứ ba vẫn theo giấy phép tương ứng.

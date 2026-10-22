@@ -4,6 +4,14 @@ from .grounded import run_grounded
 
 
 def run_collection(table, question, model, context=(), title_columns=()):
+    from ..runtime.tabular_requests import literal_query, execute_literal, missing_contact
+    missing = missing_contact(question, table)
+    if missing:
+        return {'results': [{'request_text': question, 'status': 'insufficient_data',
+            'data': [], 'evidence': [], 'reason': 'Bảng nguồn chưa có trường thông tin được hỏi: ' + missing + '.'}]}
+    literal = literal_query(table, question, title_columns, context)
+    if literal is not None:
+        return execute_literal(table, question, literal)
     from .reusable import subject_candidates
     name_matches = [c for c in subject_candidates(table, question) if c['column'] in title_columns][:12]
     decision, _ = model.call('''Classify the requested table operation, without answering.

@@ -177,6 +177,37 @@ def validate_plan(raw, query, package, state, *, apply_policy=True):
     if package.policy and apply_policy:
         reviewed = package.policy(plan, query, state)
         return validate_plan(reviewed.model_dump_json(), query, package, state, apply_policy=False)
+    if getattr(package, 'table', None) is not None:
+        from .tabular_requests import request_spans, explicit_rows, missing_contact, source_variants, folded
+        spans = request_spans(query)
+        for task in plan.tasks:
+            owners = [span for span in spans if contains(span, task.quote)]
+            if len(spans) > 1:
+                if len(owners) != 1:
+                    raise ValueError('TASK_MUST_BELONG_TO_ONE_REQUEST')
+                task.quote = owners[0]
+            row_ids = explicit_rows(task.quote)
+            if task.kind == 'answer' and re.search(
+                    r'^\s*(?:liet ke|which)\b|\bnhung\b.+\bnao\b', folded(task.quote)):
+                task.mode, task.entity, task.attributes = 'table', '', []
+            if task.kind == 'answer' and task.mode == 'direct' and len(set(row_ids)) == 1:
+                wanted = f'row_{row_ids[0]}'
+                if wanted in package.catalog:
+                    task.entity = wanted
+                else:
+                    task.mode, task.entity, task.attributes = 'table', '', []
+            if task.kind == 'answer' and missing_contact(task.quote, package.table):
+                task.mode, task.entity, task.attributes = 'table', '', []
+            if task.kind == 'answer' and task.mode == 'direct' and not row_ids:
+                variants = source_variants(task, package)
+                if len(variants) == 1:
+                    task.entity = variants[0]
+                elif len(variants) > 1:
+                    task.kind, task.attributes = 'clarify', []
+                    task.candidates = variants[:8]
+                    task.question = 'Có nhiều bản ghi khớp phần mô tả thêm. Bạn muốn tra mục nào?'
+        if len(spans) > 1 and any(not any(contains(span, t.quote) for t in plan.tasks) for span in spans):
+            raise ValueError('EVERY_REQUEST_CLAUSE_MUST_BE_COVERED')
     unique = []
     for task in plan.tasks:
         # Merge configured fields of the same subject and scope. Search needs
@@ -196,6 +227,13 @@ def validate_plan(raw, query, package, state, *, apply_policy=True):
 
 
 async def understand(query, state, package, history, client, request_id):
+    tabular_spans = [query]
+    if getattr(package, 'table', None) is not None:
+        from .tabular_requests import literal_preflight, request_spans
+        literal = literal_preflight(query, state, package)
+        if literal is not None:
+            return literal
+        tabular_spans = request_spans(query)
     if package.select_catalog:
         from copy import copy
         view = copy(package)
@@ -223,6 +261,8 @@ async def understand(query, state, package, history, client, request_id):
     schema = Plan.model_json_schema()
     schema["$defs"]["Task"]["required"] = ["kind", "quote", "entity", "attributes", "domains", "candidates", "mode", "predicates"]
     task = schema["$defs"]["Task"]["properties"]
+    if len(tabular_spans) > 1:
+        task['quote']['enum'] = tabular_spans
     if not package.table_query:
         task['mode']['enum'] = ['direct', 'search']
     task["entity"]["enum"] = ["", *package.catalog]
@@ -314,11 +354,9 @@ properties and the current wording does not identify one, ask for clarification.
             if state_value['error'] == 'TASK_QUOTE_MUST_COPY_CURRENT_REQUEST':
                 current[0]['content'] += (' Copy quote literally from CURRENT_REQUEST. '
                     'Build tasks for its requested subjects and needs; prior context is not a pending request.')
-                # A bounded replan, not silently accepting the previous tasks.
-                # The repair may use the complete current request as provenance.
                 import copy
                 current_schema = copy.deepcopy(schema)
-                current_schema['$defs']['Task']['properties']['quote']['enum'] = [query]
+                current_schema['$defs']['Task']['properties']['quote']['enum'] = tabular_spans
             if state_value["error"] == "SERVICE_PLACE_MUST_COPY_USER_OR_SAME_SUBJECT":
                 current[0]["content"] += (" Use only literal service place names actually written in CURRENT_USER; "
                     "never append province/country from PROFILE or prior context. "
@@ -331,8 +369,8 @@ properties and the current wording does not identify one, ask for clarification.
                 current[0]['content'] += (' CURRENT refers to BOTH entities in FOCUSED. '
                     'Return one task per focused entity with its own key; for configured attributes '
                     'use direct mode. Do not replace known entities by anonymous search.')
-        raw = await complete(client, current, current_schema, request_id)
         try:
+            raw = await complete(client, current, current_schema, request_id)
             draft = Plan.model_validate_json(raw)
             log.info("g85_plan_draft request_id=%s tasks=%s", request_id, json.dumps([
                 {"kind": t.kind, "entity": t.entity, "attributes": t.attributes, "mode": t.mode} for t in draft.tasks]))

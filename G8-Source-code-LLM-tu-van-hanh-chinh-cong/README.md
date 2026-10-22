@@ -62,7 +62,9 @@ uv sync --frozen
 uv run pytest -q
 ```
 
-**179 test offline** kiểm tra graph/contract/guard/catalog/hội thoại với corpus đi kèm, gồm giới hạn 8 task, migration state cũ về 2 thủ tục, bộ lọc ngược và binding evidence riêng từng ý. Test chạy trực tiếp trên source trong thư mục này; không cần snapshot riêng của tác giả, GPU hoặc MCP live. `source-service/` cũng có test, chạy `uv sync --frozen` và `uv run pytest -q` tại thư mục đó. Test offline dùng plan/model giả lập để kiểm tra contract và executor, không phải accuracy benchmark của LLM thật.
+**223 test offline** kiểm tra graph/contract/guard/catalog/hội thoại với corpus đi kèm, gồm giới hạn 8 task, migration state cũ về 2 thủ tục, bộ lọc ngược và binding evidence riêng từng ý. Bản cập nhật 22/10/2026 kiểm tra thêm yêu cầu thiếu tên thủ tục/ngữ cảnh và thông tin chưa được nguồn hỗ trợ để hỏi lại hoặc từ chối đúng phạm vi. Test chạy trực tiếp trên source trong thư mục này; không cần snapshot riêng của tác giả, GPU hoặc MCP live. `source-service/` cũng có test, chạy `uv sync --frozen` và `uv run pytest -q` tại thư mục đó. Test offline dùng plan/model giả lập để kiểm tra contract và executor, không phải accuracy benchmark của LLM thật.
+
+[Báo cáo IEEE — Hệ thống tư vấn pháp lý](../report/RP1_he-thong-tu-van-phap-ly.pdf) và [ghi chú phạm vi số liệu](../report/README.md).
 
 Trong `frontend/` (54 test bao gồm visitor, account compatibility và trình bày bằng chứng):
 

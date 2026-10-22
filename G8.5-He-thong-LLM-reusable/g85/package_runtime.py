@@ -31,11 +31,22 @@ def run_package(root, question, model, *, raw_state=None, context=(), review_loo
     # Experimental reviewer is opt-in for offline evaluation only. Live probes
     # still expose qualifier/field misbindings; do not promote it silently.
     package.review_lookups = review_lookups
+    if len(context) > 2 or any(c.get('source_sha256') != package.table.hash
+            or type(c.get('row_id')) is not int or not 1 <= c['row_id'] <= len(package.table.rows) for c in context):
+        package.table.close()
+        raise ValueError('INVALID_CONTEXT_SOURCE')
+    package.recent_entities = context
     table = package.table
     try:
         async def table_query(task, filters, rid):
-            result = run_collection(table, task.quote, model, context=context,
-                                    title_columns=package.mapping['title_columns'])
+            try:
+                result = run_collection(table, task.quote, model, context=context,
+                                        title_columns=package.mapping['title_columns'])
+            except ValueError as exc:
+                if str(exc) not in ('MODEL_OUTPUT_TRUNCATED', 'OUTPUT_TRUNCATED'):
+                    raise
+                result = {'results': [{'request_text': task.quote, 'status': 'clarify',
+                    'data': [], 'evidence': [], 'reason': 'Chưa lập được truy vấn đầy đủ. Bạn gửi riêng yêu cầu này nhé.'}]}
             g = grounding(package, rid)
             statuses = [r['status'] for r in result['results']]
             status = 'ANSWER' if all(s == 'answer' for s in statuses) else (

@@ -198,6 +198,14 @@ async def execute(data, plan, state, filters, ai, request_id):
                           'chưa cho biết bạn muốn hỏi giấy tờ nhà đất hay số địa chỉ. '
                           'Bạn xác nhận loại nào để mình tra thời gian hoặc thông tin bạn cần nhé.')
             g['missing_information'] = ['procedure_id']
+            if task.question == 'G8_SUBJECT_REQUIRED':
+                answer = 'Bạn đang hỏi thủ tục nào? Mình chưa có tên thủ tục hoặc ngữ cảnh để tra đúng thông tin.'
+            if task.question == 'G8_UNSUPPORTED_INFORMATION':
+                answer = ('Loại thông tin bạn hỏi chưa được xác minh trong các trường dữ liệu đang hỗ trợ. '
+                          'Mình không dùng một trường thông tin khác để thay thế. '
+                          'Bạn có thể hỏi hồ sơ, lệ phí, nơi nộp, thời gian hoặc hình thức nộp.')
+                g['status'] = 'INSUFFICIENT_DATA'
+                g['missing_information'] = ['unsupported_information_need']
         elif task.kind == 'outside':
             title = 'Phần ngoài phạm vi hỗ trợ'
             answer = ('Phần yêu cầu này chưa nằm trong danh mục thủ tục hành chính mình hỗ trợ. '

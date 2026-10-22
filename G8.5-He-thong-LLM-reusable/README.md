@@ -25,6 +25,16 @@ source.csv/xlsx    file nguồn để đối chiếu lại
 
 Package tự động không được đánh dấu đã được con người duyệt. Loader kiểm tra tính toàn vẹn/liên kết nguồn, không chứng minh model hiểu đúng mọi câu hỏi.
 
+## Cập nhật 22/10/2026
+
+- Câu đếm dòng, tên cột/giá trị được ghi rõ và số dòng vật lý có thể thực thi trực tiếp qua compiler có tham số. Cách hỏi có điều kiện chưa hiểu được vẫn qua planner.
+- Tách phạm vi từng intent khi lập kế hoạch và repair; dấu phân cách trong giá trị được trích dẫn không tạo thêm intent. Hỏi cùng trường của hai bản ghi giữ hai điều kiện độc lập.
+- Đối chiếu số dòng, biến thể tên, các nhãn văn bản ngắn khớp chính xác nguồn; giữ nhiều dòng trùng tên. Trường không có trong nguồn không được thay bằng trường khác như email thay điện thoại.
+- Chuỗi có dấu nháy/backslash/escape được đối chiếu với giá trị nguồn; ô thiếu và giới hạn danh sách được báo rõ bằng `partial`.
+- Nạp bảng theo lô JSON có tham số, giữ kiểu dữ liệu, thứ tự dòng và bằng chứng. Đầu ra model bị cắt đi qua repair có giới hạn.
+
+Lượt kiểm tra API trên 11 dataset đạt đủ tiêu chí 218/221, DEV 176/176; ba ca `partial` còn lại và phạm vi đánh giá được ghi tại [report](../report/README.md). PDF về hệ thống tự tạo package nằm [tại đây](../report/RP2_he-thong-tu-dong-tao-package.pdf).
+
 ## Chạy bằng Docker
 
 Chuẩn bị model `/v1/chat/completions` hỗ trợ JSON-schema output. Tham chiếu: Qwen3-8B Q4_K_M qua llama.cpp; xem [README gốc](../README.md#chạy-trên-máy-riêng). Không kèm weights hay tự khởi động model của tác giả.
@@ -81,7 +91,7 @@ Upload API dùng **raw body**, không phải multipart; ví dụ khi API local c
 ```powershell
 $dataset = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8086/v1/datasets?filename=devices.csv' -ContentType 'text/csv' -InFile examples/devices.csv
 $headers = @{ 'X-Dataset-Token' = $dataset.dataset_token }
-$body = @{ version = $dataset.version; question = 'Có bao nhiêu dòng dữ liệu?' } | ConvertTo-Json
+$body = @{ version = $dataset.version; question = 'Bảng này có bao nhiêu dòng?' } | ConvertTo-Json
 Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8086/v1/datasets/$($dataset.dataset_id)/query" -Headers $headers -ContentType 'application/json; charset=utf-8' -Body ([System.Text.Encoding]::UTF8.GetBytes($body))
 ```
 
@@ -114,7 +124,7 @@ CLI tạo package cần model sẵn sàng; output phải là thư mục **mới*
 .venv/Scripts/python.exe -m pytest g85/tests g85/tabular_lab -q
 ```
 
-149 test offline kiểm tra đọc bảng, null/số lớn, schema/hash/binding, multi-intent, context/revision, token isolation, queue và cấu hình endpoint. Model giả lập không đo accuracy LLM.
+180 test offline kiểm tra đọc bảng, null/số lớn, schema/hash/binding, multi-intent, context/revision, token isolation, queue, cấu hình endpoint và các lỗi ràng buộc yêu cầu bảng. Model giả lập không đo accuracy LLM.
 
 UI acceptance dùng API giả lập, không gọi model:
 
